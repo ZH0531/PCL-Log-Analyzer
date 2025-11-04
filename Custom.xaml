@@ -1,0 +1,131 @@
+<!-- PCL 日志分析工具 - 自定义主页
+     作者：PCL Log Analyzer
+     版本：1.0.0
+     更新日期：2025-11-03 -->
+
+<local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
+    <StackPanel Margin="25,40,23,15">
+        <local:MyHint Text="分析游戏日志，自动识别错误类型并提供解决方案，首次使用请点安装工具" IsWarn="False"/>
+        
+        <!-- 主功能按钮 -->
+        <local:MyButton Height="50" Margin="0,15,0,0" ColorType="Highlight"
+            Text="📊 分析最新日志" 
+            EventType="打开文件" 
+            EventData="powershell.exe|-ExecutionPolicy Bypass -File &quot;{path}PCL\PCL Log Analyzer\Scripts\AnalyzeLogs.ps1&quot;"
+            ToolTip="自动分析最近一次游戏的日志文件"/>
+        
+        <!-- 辅助功能 -->
+        <Grid Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            
+            <local:MyButton Grid.Column="0" Margin="0,0,5,0" Height="40"
+                Text="📂 手动选择日志" 
+                EventType="打开文件" 
+                EventData="powershell.exe|-ExecutionPolicy Bypass -File &quot;{path}PCL\PCL Log Analyzer\Scripts\SelectLog.ps1&quot;"
+                ToolTip="浏览并选择要查看的日志文件"/>
+            
+            <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="40"
+                Text="🔄 安装/更新工具" 
+                EventType="打开文件" 
+                EventData="powershell.exe|-ExecutionPolicy Bypass -Command &quot;$pclRoot='{path}PCL'; cd $pclRoot; $script=irm 'https://pcl-log-analyzer.oss-cn-hangzhou.aliyuncs.com/Install.ps1'; iex $script&quot;"
+                ToolTip="首次使用点此安装，或更新到最新版本（包含环境检查）"/>
+        </Grid>
+
+        <!-- 快捷入口 -->
+        <Grid Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            
+            <local:MyButton Grid.Column="0" Margin="0,0,5,0" Height="35"
+                Text="📄 上次报告" 
+                EventType="打开文件" 
+                EventData="{path}PCL\PCL Log Analyzer\Reports\latest.html"
+                ToolTip="打开最近一次生成的分析报告"/>
+            
+            <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="35"
+                Text="📁 历史报告" 
+                EventType="打开文件" 
+                EventData="explorer.exe|{path}PCL\PCL Log Analyzer\Reports"
+                ToolTip="查看所有历史分析报告"/>
+        </Grid>
+        
+        <!-- 使用说明 -->
+        <TextBlock TextWrapping="Wrap" Margin="0,15,0,0" FontSize="11" Foreground="#666666"
+            Text="💡 首次使用建议："/>
+        <TextBlock TextWrapping="Wrap" Margin="20,5,0,0" FontSize="11" Foreground="#666666"
+            Text="① 首次使用点击【安装/更新工具】(包含环境检查)&#xA;② 点击【分析最新日志】自动分析&#xA;③ 分析完成后会自动打开HTML报告&#xA;④ 有新版本时重新点击【安装/更新工具】即可"/>
+    </StackPanel>
+</local:MyCard>
+
+<!-- 实用工具箱 -->
+<local:MyCard Title="实用工具箱" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
+    <StackPanel Margin="25,40,23,15">
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/CommandBlock.png"
+            Title="查看启动脚本" 
+            Info="查看上次游戏启动的完整命令（Java参数、内存配置、Mod加载等）" 
+            EventType="打开文件" 
+            EventData="notepad.exe|LatestLaunch.bat"
+            Type="Clickable" />
+        
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/Fabric.png" 
+            Title="清空历史报告" 
+            Info="删除所有已生成的分析报告文件，释放磁盘空间" 
+            EventType="打开文件" 
+            EventData="powershell.exe|-NoExit -ExecutionPolicy Bypass -File &quot;{path}PCL\PCL Log Analyzer\Scripts\ClearReports.ps1&quot;"
+            Type="Clickable" />
+        
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/Egg.png" 
+            Title="今日人品" 
+            Info="测试今天的运气值，看看适不适合玩游戏" 
+            EventType="今日人品"
+            Type="Clickable" />
+        
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/Anvil.png" 
+            Title="清理垃圾" 
+            Info="清理游戏缓存和临时文件，释放磁盘空间" 
+            EventType="清理垃圾"
+            Type="Clickable" />
+        
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/GoldBlock.png" 
+            Title="内存优化" 
+            Info="优化系统内存占用，提升游戏性能" 
+            EventType="内存优化"
+            Type="Clickable" />
+        
+        <local:MyListItem Margin="-5,2,-5,8"
+            Logo="pack://application:,,,/images/Blocks/GrassPath.png" 
+            Title="刷新主页" 
+            Info="重新加载此自定义主页（联网更新时会重新下载）" 
+            EventType="刷新主页"
+            Type="Clickable" />
+    </StackPanel>
+</local:MyCard>
+
+<!-- 关于工具 -->
+<local:MyCard Title="关于工具" Margin="0,0,0,15" CanSwap="True" IsSwaped="True">
+    <StackPanel Margin="25,40,23,15">
+        <TextBlock TextWrapping="Wrap" FontWeight="Bold" Margin="0,0,0,8"
+            Text="✨ 核心功能"/>
+        <TextBlock TextWrapping="Wrap" Margin="15,0,0,12" FontSize="11"
+            Text="• 自动定位最近启动版本的日志文件&#xA;• 智能识别 ERROR/FATAL 错误（忽略普通警告）&#xA;• 提取 Java 版本、内存配置等关键信息&#xA;• 生成简约美观的浅色系 HTML 报告&#xA;• 区分游戏崩溃和正常退出状态"/>
+        
+        <TextBlock TextWrapping="Wrap" FontWeight="Bold" Margin="0,12,0,8"
+            Text="📝 使用指南"/>
+        <TextBlock TextWrapping="Wrap" Margin="15,0,0,0" FontSize="11"
+            Text="① 首次使用点击【安装/更新工具】&#xA;② 安装过程会自动检查环境并配置UTF-8&#xA;③ 点击【分析最新日志】快速分析&#xA;④ 或使用【手动选择日志】指定文件&#xA;⑤ 报告自动打开，也可点【上次报告】重看&#xA;⑥ 更新工具时重新点击【安装/更新工具】"/>
+        
+        <TextBlock TextWrapping="Wrap" Margin="15,12,0,0" FontSize="10" Foreground="#95a5a6"
+            Text="提示：报告保存在 PCL\PCL Log Analyzer\Reports 文件夹，可随时查看或删除"/>
+    </StackPanel>
+</local:MyCard>
+

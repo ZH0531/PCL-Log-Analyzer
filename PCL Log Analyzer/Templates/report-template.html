@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<title>{{PAGE_TITLE}}</title>
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',sans-serif;background:#f5f7fa;padding:24px;line-height:1.6}
+.container{max-width:1400px;margin:0 auto}
+.header{background:#fff;border-radius:10px;padding:20px 24px 16px 24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.header h1{font-size:18px;color:#2c3e50;font-weight:600}
+.status-big{display:inline-block;padding:8px 20px;background:{{STATUS_COLOR}};color:white;border-radius:16px;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.header-hint{position:absolute;bottom:12px;right:24px;font-size:11px;color:#b0b0b0}
+.header-links{display:flex;gap:16px;font-size:13px}
+.github-link{color:#667eea;text-decoration:none;transition:all 0.2s;position:relative}
+.github-link:hover{color:#5568d3}
+.github-link::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:1px;background:#667eea;transition:width 0.2s}
+.github-link:hover::after{width:100%}
+.main-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.left-column,.right-column{display:flex;flex-direction:column;gap:20px}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative}
+.card h2{font-size:15px;color:#2c3e50;margin-bottom:16px;font-weight:600;padding-bottom:8px;border-bottom:2px solid #f0f0f0}
+.copy-btn{position:absolute;top:16px;right:16px;background:transparent;color:#95a5a6;border:none;padding:6px 12px;font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:400;border-radius:4px}
+.copy-btn:hover{color:#667eea;background:rgba(102,126,234,0.08)}
+.copy-btn:active{transform:translateY(1px)}
+.copy-btn.copied{color:#10b981;background:rgba(16,185,129,0.1)}
+.compress-btn{position:absolute;top:16px;right:70px;background:transparent;color:#95a5a6;border:none;padding:6px 12px;font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:400;border-radius:4px}
+.compress-btn:hover{color:#f59e0b;background:rgba(245,158,11,0.08)}
+.compress-btn:active{transform:translateY(1px)}
+.compress-btn.active{color:#f59e0b;background:rgba(245,158,11,0.12);font-weight:500}
+.info-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.info-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{padding:12px;background:#f8f9fa;border-radius:6px;border-left:3px solid {{STATUS_COLOR}}}
+.info-label{font-size:11px;color:#7f8c8d;margin-bottom:5px;text-transform:uppercase}
+.info-value{font-size:15px;color:#2c3e50;font-weight:600;word-break:break-word}
+.error-box{background:#fff5f5;border:1px solid #ffe0e0;border-radius:6px;padding:12px;margin-bottom:12px}
+.error-type{font-weight:600;color:#e74c3c;margin-bottom:8px;font-size:14px}
+.error-code{background:#f8f9fa;padding:10px;border-radius:5px;font-family:Consolas,monospace;font-size:11px;color:#555;overflow-x:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.sug-box{background:#f0fdf4;border:1px solid #d1fae5;border-radius:6px;padding:12px;margin-bottom:12px;font-size:14px}
+.sug-box strong{color:#059669;margin-right:6px}
+.log-container{background:#f8f9fa;border-radius:6px;padding:12px;height:400px;overflow-y:auto}
+.log-line{font-family:Consolas,monospace;font-size:10px;color:#555;padding:2px 0;line-height:1.4;white-space:pre-wrap;word-break:break-all}
+.empty-state{text-align:center;padding:30px;color:#95a5a6;font-size:14px}
+.footer{text-align:center;margin-top:24px;padding:16px;color:#95a5a6;font-size:12px}
+.footer a{color:#667eea;text-decoration:none;margin:0 8px}
+.footer a:hover{text-decoration:underline}
+@media(max-width:1200px){.main-layout{grid-template-columns:1fr;gap:16px}}
+    </style>
+</head>
+<body>
+<div class='container'>
+<div class='header'>
+<div class='header-top'>
+<h1>Minecraft {{LOG_FILE_NAME}} 分析报告</h1>
+<div class='header-links'>
+<a href='https://github.com/ZH0531/PCL-Log-Analyzer' target='_blank' class='github-link'>GitHub 源码</a>
+<a href='https://github.com/ZH0531/PCL-Log-Analyzer/issues' target='_blank' class='github-link'>反馈问题</a>
+            </div>
+</div>
+<div class='status-big'>{{STATUS_TEXT}}</div>
+<div class='header-hint'>提示：若未找到具体问题原因，建议使用复制按钮将"发现的问题"或"关键日志"发送给他人寻求帮助，或通过右上角反馈问题</div>
+        </div>
+        
+<div class='main-layout'>
+<div class='left-column'>
+<div class='card'>
+                <h2>📊 基本信息</h2>
+{{BASIC_INFO_HTML}}
+                    </div>
+            
+<div class='card'>
+<h2>💡 解决建议</h2>
+{{SUGGESTIONS_HTML}}
+                </div>
+            </div>
+            
+<div class='right-column'>
+<div class='card' id='error-card'>
+<button class='copy-btn' onclick='copyContent("error-card")'>复制</button>
+<h2>⚠️ 发现的问题 ({{ERROR_COUNT}})</h2>
+<div id='errors-container'></div>
+            </div>
+            
+<div class='card' id='log-card'>
+<button class='compress-btn' onclick='toggleCompress()'>过滤</button>
+<button class='copy-btn' onclick='copyContent("log-card")'>复制</button>
+<h2>📋 关键日志 ({{LOG_COUNT}})</h2>
+<div class='log-container'>{{LOGS_HTML}}</div>
+                </div>
+            </div>
+        </div>
+        
+<div class='footer'>
+<p>PCL Log Analyzer v1.0.0 • 分析时间: {{TIMESTAMP}}</p>
+<p style='font-size:11px;color:#aaa;margin-top:6px'>此报告仅供参考 • 基于日志自动生成</p>
+        </div>
+    </div>
+    <script>
+// 错误数据（从 PowerShell 注入）
+const errorsData = {{ERRORS_JSON}};
+
+function copyContent(cardId) {
+    const card = document.getElementById(cardId);
+    const btn = card.querySelector('.copy-btn');
+    
+    // 获取卡片内容（排除按钮和标题）
+    let textToCopy = '';
+    const title = card.querySelector('h2').textContent;
+    textToCopy += title + '\n' + '='.repeat(50) + '\n\n';
+    
+    if (cardId === 'error-card') {
+        const errors = card.querySelectorAll('.error-box');
+        errors.forEach((error, idx) => {
+            const type = error.querySelector('.error-type')?.textContent || '';
+            const code = error.querySelector('.error-code')?.textContent || '';
+            textToCopy += (idx + 1) + '. ' + type + '\n' + code + '\n\n';
+        });
+        if (errors.length === 0) {
+            textToCopy += card.querySelector('.empty-state')?.textContent || '无错误';
+        }
+    } else if (cardId === 'log-card') {
+        const logs = card.querySelectorAll('.log-line');
+        logs.forEach(log => {
+            textToCopy += log.textContent + '\n';
+        });
+        if (logs.length === 0) {
+            textToCopy += card.querySelector('.empty-state')?.textContent || '无日志';
+        }
+    }
+    
+    // 复制到剪贴板
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '复制';
+            btn.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        btn.textContent = '失败';
+                    setTimeout(() => {
+            btn.textContent = '复制';
+                    }, 2000);
+                });
+            }
+
+// 渲染错误列表
+function renderErrors() {
+    const container = document.getElementById('errors-container');
+    
+    if (!errorsData || errorsData.length === 0) {
+        container.innerHTML = "<div class='empty-state'>✅ 未发现错误</div>";
+        return;
+    }
+    
+    let html = '';
+    errorsData.forEach(e => {
+        html += renderError(e);
+    });
+    container.innerHTML = html;
+}
+
+// 渲染单个错误
+function renderError(e) {
+    let html = "<div class='error-box'>";
+    
+    if (e.IsCollectDetails) {
+        // 收集详情类型
+        if (e.Type === 'Mod初始化失败') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
+                html += `<div class='error-code'>涉及的Mod: ${e.Details.sort().join(', ')}</div>`;
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
+        } else if (e.Type === 'Mod加载失败') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
+                html += `<div class='error-code'>失败的Mod: ${e.Details.sort().join(', ')}</div>`;
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
+        } else if (e.Type === 'Mod版本不匹配') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个问题)</div>`;
+                e.Details.forEach(detail => {
+                    html += `<div class='error-code'>• ${detail}</div>`;
+                });
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
+        } else if (e.Type === 'Mod依赖缺失') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个依赖)</div>`;
+                html += `<div class='error-code'>缺失的Mod: ${e.Details.sort().join(', ')}</div>`;
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                const firstLine = cleanErrorLine(e.Content);
+                html += `<div class='error-code'>${firstLine}（详见关键日志）</div>`;
+            }
+        } else {
+            // 其他收集详情类型：显示计数
+            const countText = (e.Count && e.Count > 1) ? ` (共${e.Count}${getCountUnit(e.Type)})` : '';
+            html += `<div class='error-type'>${e.Type}${countText}</div>`;
+            html += `<div class='error-code'>${getErrorDescription(e)}</div>`;
+        }
+    } else {
+        // 普通错误类型
+        html += `<div class='error-type'>${e.Type}</div>`;
+        const cleanContent = cleanErrorLine(e.Content);
+        html += `<div class='error-code'>${cleanContent}</div>`;
+    }
+    
+    html += "</div>";
+    return html;
+}
+
+// 清理错误行（去除时间戳、线程信息、非法字符）
+function cleanErrorLine(content) {
+    if (!content) return '';
+    
+    let firstLine = content.split('\n')[0].trim();
+    
+    // 去除时间戳和线程信息
+    firstLine = firstLine.replace(/^\[[\d:]+\]\s*\[.+?\]:\s*/, '');
+    firstLine = firstLine.replace(/^\[[\d:]+\]\s*\[.+?\]\s+/, '');
+    
+    // 截断过长内容
+    if (firstLine.length > 200) {
+        firstLine = firstLine.substring(0, 197) + '...';
+    }
+    
+    // 替换非法字符
+    firstLine = firstLine.replace(/[^\x20-\x7E\u4e00-\u9fff\[\]\(\)\{\}\-\+\=\.\,\:\;\/\\]/g, '?');
+    
+    return firstLine;
+}
+
+// 获取计数单位
+function getCountUnit(type) {
+    const units = {
+        '模型加载失败': '个文件',
+        '资源路径错误': '个文件',
+        '资源注册缺失': '项',
+        'Mod状态异常': '条事件被拒绝',
+        'Mod跳过加载': '次',
+        '一般错误': '条',
+        '致命错误': '条'
+    };
+    return units[type] || '个';
+}
+
+// 获取错误描述
+function getErrorDescription(e) {
+    const descriptions = {
+        '模型加载失败': '某些Mod的模型文件缺失或路径错误，通常不影响游戏运行',
+        '资源路径错误': '文件名包含非法字符，通常不影响游戏运行',
+        'Mod状态异常': 'Forge拒绝向崩溃的Mod发送事件，这是连带错误，解决根本原因即可',
+        '游戏崩溃': '游戏已生成崩溃报告，详细崩溃信息请查看上方的其他错误类型或崩溃报告文件'
+    };
+    
+    if (descriptions[e.Type]) {
+        return descriptions[e.Type];
+    }
+    
+    if (e.Type === '资源注册缺失' || e.Type === 'Mod跳过加载') {
+        return cleanErrorLine(e.Content);
+    }
+    
+    if (e.Type === '一般错误' && e.Count && e.Count > 1) {
+        return '检测到多条未分类的错误，请在关键日志中查看详细信息';
+    }
+    
+    if (e.Type === '致命错误') {
+        if (e.Count && e.Count > 1) {
+            return '检测到致命错误，具体错误信息请查看上方的其他错误类型或关键日志';
+        } else {
+            return '检测到致命错误，这通常是其他错误的结果，请查看上方的其他错误类型找到根本原因';
+        }
+    }
+    
+    if (e.Type === '一般错误' && (!e.Count || e.Count === 1)) {
+        return cleanErrorLine(e.Content);
+    }
+    
+    return '详见关键日志';
+}
+
+let isFiltered = false;
+let originalLogs = '';
+
+// 提取日志的核心模式（去掉可变部分）
+function extractPattern(log) {
+    let pattern = log;
+    
+    // 移除时间戳
+    pattern = pattern.replace(/\[\d{8}\s+\d{2}:\d{2}:\d{2}\.\d{3}\]/g, '');
+    pattern = pattern.replace(/\[\d{4}\?\?\d{4}\s+\d{2}:\d{2}:\d{2}\.\d{3}\]/g, '');
+    
+    // 移除所有方括号内容（线程、包名、类名等）
+    pattern = pattern.replace(/\[[^\]]*\]/g, '');
+    
+    // ⚠️ 关键：先处理特定模式，再处理通用模式！
+    
+    // 移除具体的事件名（必须在类名替换之前！）
+    pattern = pattern.replace(/event\s+[\w\.\$]+/gi, 'event <EVENT>');
+    
+    // 移除具体的资源路径（如 eternal_starlight:trims/...）
+    pattern = pattern.replace(/[a-z0-9_]+:[a-z0-9_\/\-\.]+/gi, '<PATH>');
+    
+    // 移除具体的文件路径（如 ./config/...）
+    pattern = pattern.replace(/\.\/[a-z0-9_\/\-\.]+/gi, '<FILE>');
+    pattern = pattern.replace(/[A-Z]:\\[^\s]+/g, '<FILE>');
+    
+    // 移除具体的类名（放在最后，避免影响事件名匹配）
+    pattern = pattern.replace(/[a-z]+(\.[a-z]+){2,}/gi, '<CLASS>');
+    
+    // 移除UUID
+    pattern = pattern.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<UUID>');
+    
+    // 移除数字
+    pattern = pattern.replace(/\b\d+\b/g, '<NUM>');
+    
+    // 移除连续空格
+    pattern = pattern.replace(/\s+/g, ' ').trim();
+    
+    return pattern;
+}
+
+function toggleCompress() {
+    const btn = document.querySelector('.compress-btn');
+    const container = document.querySelector('.log-container');
+    const logLines = document.querySelectorAll('.log-line');
+    
+    if (!isFiltered) {
+        // 保存原始HTML
+        originalLogs = container.innerHTML;
+        
+        // 获取所有日志
+        let logs = Array.from(logLines).map(line => line.textContent.trim()).filter(text => text.length > 0);
+        
+        // 第一步：统计所有模式
+        const patternMap = new Map(); // pattern -> {count, firstLog, indices[]}
+        
+        logs.forEach((log, index) => {
+            const pattern = extractPattern(log);
+            if (!patternMap.has(pattern)) {
+                patternMap.set(pattern, { count: 0, firstLog: log, firstIndex: index });
+            }
+            patternMap.get(pattern).count++;
+        });
+        
+        // 第二步：按原始顺序输出，跳过重复
+        let compressedHTML = '';
+        const processedPatterns = new Set();
+        
+        logs.forEach((log, index) => {
+            const pattern = extractPattern(log);
+            
+            // 如果这个模式已经处理过，直接跳过
+            if (processedPatterns.has(pattern)) {
+                return;
+            }
+            
+            const entry = patternMap.get(pattern);
+            
+            // 只在第一次遇到这个模式时处理
+            if (entry.count >= 3) {
+                // 重复3次以上，合并显示
+                let shortLog = log.replace(/^\[.*?\]\s*\[.*?\]\s*/, '');
+                
+                // 智能提取重复模式的关键词
+                let summary = shortLog;
+                if (shortLog.includes('Cowardly refusing to send event')) {
+                    summary = 'Cowardly refusing to send event (拒绝发送事件到崩溃的Mod)';
+                } else if (shortLog.includes('Failed to load palette image')) {
+                    summary = 'Failed to load palette image (无法加载调色板图像)';
+                } else if (shortLog.includes('unable to apply palette')) {
+                    summary = 'unable to apply palette (无法应用调色板)';
+                } else if (shortLog.includes('Using vanilla stitcher implementation')) {
+                    summary = 'Using vanilla stitcher implementation (使用原版拼接实现)';
+                } else if (shortLog.includes('Preparing crash report')) {
+                    summary = 'Preparing crash report (准备崩溃报告)';
+                } else if (shortLog.includes('Failed to load model')) {
+                    summary = 'Failed to load model (模型加载失败)';
+                } else if (shortLog.length > 100) {
+                    summary = shortLog.substring(0, 97) + '...';
+                }
+                
+                compressedHTML += `<div class='log-line' style='color:#f57c00;font-weight:600'>[×${entry.count}] ${summary}</div>`;
+            } else {
+                // 不重复或重复少，正常显示
+                compressedHTML += `<div class='log-line'>${log}</div>`;
+            }
+            
+            // 标记为已处理
+            processedPatterns.add(pattern);
+        });
+        
+        container.innerHTML = compressedHTML || "<div class='empty-state'>过滤后无内容</div>";
+        btn.textContent = '已过滤';
+        btn.classList.add('active');
+        isFiltered = true;
+            } else {
+        // 还原原始内容
+        container.innerHTML = originalLogs;
+        btn.textContent = '过滤';
+        btn.classList.remove('active');
+        isFiltered = false;
+    }
+}
+
+// 页面加载完成后渲染错误和自动执行过滤
+window.addEventListener('DOMContentLoaded', function() {
+    renderErrors();
+    toggleCompress();
+        });
+    </script>
+</body>
+</html>
