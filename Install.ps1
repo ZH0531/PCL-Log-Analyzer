@@ -53,7 +53,7 @@ Write-Host ""
 Write-Host "[3/7] Checking Version..." -ForegroundColor Yellow
 
 # Download remote version file
-$versionUrl = "$CDNUrl/version"
+$versionUrl = "$CDNUrl/Custom.xaml.ini"
 $tempVersion = Join-Path $env:TEMP "remote.version"
 
 try {
@@ -79,7 +79,7 @@ try {
 }
 
 # Check local version
-$localVersionFile = Join-Path $installPath "version"
+$localVersionFile = Join-Path $installPath "Custom.xaml.ini"
 $needsInstall = $true
 
 if (Test-Path $localVersionFile) {
@@ -228,7 +228,7 @@ $requiredFiles = @(
     "Scripts\ClearReports.ps1",
     "Scripts\ErrorRules.ps1",
     "Templates\report-template.html",
-    "version"
+    "Custom.xaml.ini"
 )
 
 $allOk = $true

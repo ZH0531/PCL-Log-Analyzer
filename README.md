@@ -29,6 +29,7 @@ PCL/PCL Log Analyzer/        # 工具文件结构
 │   └── ErrorRules.ps1       # 错误识别规则库
 ├── Templates/
 │   └── report-template.html # HTML 报告模板
+├── Custom.xaml.ini          # 版本控制文件
 └── Reports/                 # 生成的报告存放位置
     ├── latest.html          # 最新报告
     └── report-*.html        # 历史报告
