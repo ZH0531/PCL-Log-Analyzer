@@ -53,7 +53,7 @@ Write-Host ""
 Write-Host "[3/7] Checking Version..." -ForegroundColor Yellow
 
 # Download remote version file
-$versionUrl = "$CDNUrl/1.0.0.version"
+$versionUrl = "$CDNUrl/version"
 $tempVersion = Join-Path $env:TEMP "remote.version"
 
 try {
@@ -79,7 +79,7 @@ try {
 }
 
 # Check local version
-$localVersionFile = Join-Path $installPath "1.0.0.version"
+$localVersionFile = Join-Path $installPath "version"
 $needsInstall = $true
 
 if (Test-Path $localVersionFile) {
@@ -228,7 +228,7 @@ $requiredFiles = @(
     "Scripts\ClearReports.ps1",
     "Scripts\ErrorRules.ps1",
     "Templates\report-template.html",
-    "1.0.0.version"
+    "version"
 )
 
 $allOk = $true
