@@ -57,7 +57,7 @@ PCL/PCL Log Analyzer/        # 工具文件结构
 
 ### 从本仓库拉取部署（可选）
 
-如果需要本地使用：
+如果需要获取最新版本：
 
 1. 从本仓库下载 `PCL Log Analyzer/` 文件夹和 `Custom.xaml`
 2. 复制到 PCL 根目录：
@@ -111,20 +111,6 @@ PCL/PCL Log Analyzer/        # 工具文件结构
 - 在线安装/更新按钮
 - 工具调用接口
 
-## 📊 内存获取逻辑
-
-```
-1. 启动时：从 LatestLaunch.bat 提取 → $memoryFromBat
-   └─ 匹配 -Xmx(\d+)m
-   └─ 格式：6.0 GB (6144 MB)
-
-2. 扫描日志：尝试从日志提取（优先）
-   └─ 匹配 JVM Flags.*-Xmx(\d+)m
-   └─ 匹配 Max memory: (\d+) MB
-   └─ 只在 Memory == "Unknown" 时更新
-
-3. 兜底：日志未找到时使用 $memoryFromBat
-```
 
 ## 🎯 错误识别类型
 

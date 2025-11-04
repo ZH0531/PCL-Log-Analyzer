@@ -1,7 +1,7 @@
 <!-- PCL 日志分析工具 - 自定义主页
-     作者：PCL Log Analyzer
+     作者：ZH0531
      版本：1.0.0
-     更新日期：2025-11-03 -->
+     更新日期：2025-11-04 -->
 
 <local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
     <StackPanel Margin="25,40,23,15">
@@ -103,7 +103,7 @@
             Type="Clickable" />
         
         <local:MyListItem Margin="-5,2,-5,8"
-            Logo="pack://application:,,,/images/Blocks/GrassPath.png" 
+            Logo="pack://application:,,,/images/Blocks/RedstoneBlock.png" 
             Title="刷新主页" 
             Info="重新加载此自定义主页（联网更新时会重新下载）" 
             EventType="刷新主页"
@@ -114,7 +114,7 @@
 <!-- 碎碎念 -->
 <local:MyCard Title="碎碎念" Margin="0,0,0,15" CanSwap="True" IsSwaped="True">
     <StackPanel Margin="25,40,23,15">
-        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" FontSize="11" LineHeight="18"
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" FontSize="13" LineHeight="18"
             Text="又崩溃了？别慌，我帮你看看日志里写了啥~"/>
         
         <Grid Margin="0,5,0,0">
@@ -136,7 +136,7 @@
                 ToolTip="发现问题？来这里告诉我"/>
         </Grid>
         
-        <TextBlock TextWrapping="Wrap" Margin="0,15,0,0" FontSize="10" Foreground="#95a5a6" TextAlignment="Center"
+        <TextBlock TextWrapping="Wrap" Margin="0,15,0,0" FontSize="11" Foreground="#95a5a6" TextAlignment="Center"
             Text="祝你游戏愉快，不要再崩了！"/>
         
 
