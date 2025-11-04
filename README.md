@@ -42,7 +42,7 @@ PCL/PCL Log Analyzer/        # 工具文件结构
 2. **设置** → **个性化** → **主页**→ **联网更新**
 3. 输入地址：
    ```
-   https://pcl-log-analyzer.oss-cn-hangzhou.aliyuncs.com/Custom.xaml
+   https://pcl.log.zh8888.top/Custom.xaml
    ```
 
 4. 回到主页，点击 **🔄 安装/更新工具**

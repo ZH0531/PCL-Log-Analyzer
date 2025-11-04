@@ -2,7 +2,7 @@
 # Version: 1.0.0
 
 param(
-    [string]$CDNUrl = "https://pcl-log-analyzer.oss-cn-hangzhou.aliyuncs.com"
+    [string]$CDNUrl = "https://pcl.log.zh8888.top"
 )
 
 try {
