@@ -45,16 +45,112 @@ if ($currentCP -match '65001') {
 
 Write-Host ""
 
-Write-Host "[2/6] Detecting Install Location..." -ForegroundColor Yellow
+Write-Host "[2/7] Detecting Install Location..." -ForegroundColor Yellow
 Write-Host "  PCL Root: $pclRoot" -ForegroundColor White
+$installPath = Join-Path $pclRoot "PCL Log Analyzer"
+Write-Host ""
+
+Write-Host "[3/7] Checking Version..." -ForegroundColor Yellow
+
+# Download remote version file
+$versionUrl = "$CDNUrl/1.0.0.version"
+$tempVersion = Join-Path $env:TEMP "remote.version"
+
+try {
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest -Uri $versionUrl -OutFile $tempVersion -UseBasicParsing
+    $versionContent = Get-Content $tempVersion
+    $remoteVersion = $versionContent[0].Trim()
+    
+    # Parse file sizes from version file
+    $remoteFileSizes = @{}
+    for ($i = 1; $i -lt $versionContent.Length; $i++) {
+        if ($versionContent[$i] -match '^(.+)=(\d+)$') {
+            $remoteFileSizes[$matches[1]] = [int]$matches[2]
+        }
+    }
+    
+    Remove-Item $tempVersion -Force
+    Write-Host "  Remote Version: $remoteVersion" -ForegroundColor Cyan
+} catch {
+    Write-Host "  ! Cannot fetch remote version, continue anyway" -ForegroundColor Yellow
+    $remoteVersion = $null
+    $remoteFileSizes = @{}
+}
+
+# Check local version
+$localVersionFile = Join-Path $installPath "1.0.0.version"
+$needsInstall = $true
+
+if (Test-Path $localVersionFile) {
+    $localVersionContent = Get-Content $localVersionFile
+    $localVersion = $localVersionContent[0].Trim()
+    Write-Host "  Local Version:  $localVersion" -ForegroundColor Cyan
+    
+    # Verify file integrity if version matches
+    if ($remoteVersion -and $localVersion -eq $remoteVersion) {
+        Write-Host "  Checking file integrity..." -ForegroundColor Gray
+        
+        $allFilesOk = $true
+        
+        # Check all files listed in version file
+        foreach ($fileEntry in $remoteFileSizes.Keys) {
+            $fullPath = Join-Path $installPath $fileEntry
+            $expectedSize = $remoteFileSizes[$fileEntry]
+            
+            if (-not (Test-Path $fullPath)) {
+                Write-Host "    ! Missing: $fileEntry" -ForegroundColor Yellow
+                $allFilesOk = $false
+                break
+            }
+            
+            # Check file size with tolerance (±1KB)
+            $actualSize = (Get-Item $fullPath).Length
+            $tolerance = 1024
+            $sizeDiff = [Math]::Abs($actualSize - $expectedSize)
+            
+            if ($sizeDiff -gt $tolerance) {
+                Write-Host "    ! Size mismatch: $fileEntry" -ForegroundColor Yellow
+                Write-Host "      Expected: ~$expectedSize bytes, Got: $actualSize bytes" -ForegroundColor Gray
+                $allFilesOk = $false
+                break
+            }
+        }
+        
+        if ($allFilesOk) {
+            Write-Host "    All files intact" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "=========================================" -ForegroundColor Green
+            Write-Host "  Already Up-to-Date!" -ForegroundColor Green
+            Write-Host "=========================================" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "Current version: $localVersion" -ForegroundColor White
+            Write-Host "No update needed." -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "Window will close in 3 seconds..." -ForegroundColor Gray
+            Start-Sleep -Seconds 3
+            Stop-Process -Id $PID
+        } else {
+            Write-Host "    Files damaged, reinstalling..." -ForegroundColor Yellow
+            $needsInstall = $true
+        }
+    } else {
+        Write-Host "  Update available: $localVersion -> $remoteVersion" -ForegroundColor Green
+        $needsInstall = $true
+    }
+} else {
+    Write-Host "  Local Version:  Not installed" -ForegroundColor Gray
+    Write-Host "  First time installation" -ForegroundColor Green
+    $needsInstall = $true
+}
+
 Write-Host ""
 
 # Prepare download
 $zipUrl = "$CDNUrl/PCL-Log-Analyzer.zip"
 $tempZip = Join-Path $env:TEMP "PCL-Log-Analyzer.zip"
-$installPath = Join-Path $pclRoot "PCL Log Analyzer"
 
-Write-Host "[3/6] Downloading Package..." -ForegroundColor Yellow
+Write-Host "[4/7] Downloading Package..." -ForegroundColor Yellow
 Write-Host "  URL: $zipUrl" -ForegroundColor Gray
 
 try {
@@ -72,7 +168,7 @@ try {
 }
 
 Write-Host ""
-Write-Host "[4/6] Installing Files..." -ForegroundColor Yellow
+Write-Host "[5/7] Installing Files..." -ForegroundColor Yellow
 
 try {
     # Backup if exists
@@ -124,14 +220,15 @@ try {
 }
 
 Write-Host ""
-Write-Host "[5/6] Verifying Installation..." -ForegroundColor Yellow
+Write-Host "[6/7] Verifying Installation..." -ForegroundColor Yellow
 
 $requiredFiles = @(
     "Scripts\AnalyzeLogs.ps1",
     "Scripts\SelectLog.ps1",
     "Scripts\ClearReports.ps1",
     "Scripts\ErrorRules.ps1",
-    "Templates\report-template.html"
+    "Templates\report-template.html",
+    "1.0.0.version"
 )
 
 $allOk = $true
@@ -146,7 +243,7 @@ foreach ($file in $requiredFiles) {
 }
 
 Write-Host ""
-Write-Host "[6/6] Finalizing..." -ForegroundColor Yellow
+Write-Host "[7/7] Finalizing..." -ForegroundColor Yellow
 Write-Host "  + All scripts configured with UTF-8" -ForegroundColor Green
 Write-Host "  + Ready to use" -ForegroundColor Green
 
@@ -161,10 +258,30 @@ if ($allOk) {
     Write-Host "  * Click [Manual Select Log] for custom analysis" -ForegroundColor White
 } else {
     Write-Host "=========================================" -ForegroundColor Red
-    Write-Host "  Installation Incomplete" -ForegroundColor Red
+    Write-Host "  Installation Failed!" -ForegroundColor Red
     Write-Host "=========================================" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Some files are missing. Please reinstall." -ForegroundColor Yellow
+    Write-Host "Possible causes:" -ForegroundColor Yellow
+    Write-Host "  * Network interruption during download" -ForegroundColor White
+    Write-Host "  * Package corruption or tampering" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Cleaning up..." -ForegroundColor Yellow
+    
+    # Remove corrupted installation
+    if (Test-Path $installPath) {
+        Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "  + Removed corrupted files" -ForegroundColor Green
+    }
+    
+    # Restore backup if exists
+    $backupPath = "$installPath.backup"
+    if (Test-Path $backupPath) {
+        Move-Item $backupPath $installPath -Force
+        Write-Host "  + Restored previous version" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    Write-Host "Please try again or contact support" -ForegroundColor Yellow
 }
 
 Write-Host ""
