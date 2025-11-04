@@ -184,6 +184,22 @@ function renderError(e) {
                 html += `<div class='error-type'>${e.Type}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
+        } else if (e.Type === 'Fabric环境安装了Forge Mod' || e.Type === 'Forge环境安装了Fabric Mod') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个文件)</div>`;
+                html += `<div class='error-code'>错误的Mod: ${e.Details.sort().join(', ')}</div>`;
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
+        } else if (e.Type === 'Mod与MC版本不兼容') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
+                html += `<div class='error-code'>不兼容的Mod: ${e.Details.sort().join(', ')}</div>`;
+            } else {
+                html += `<div class='error-type'>${e.Type}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
         } else if (e.Type === 'Mod版本不匹配') {
             if (e.Details && e.Details.length > 0) {
                 html += `<div class='error-type'>${e.Type} (${e.Details.length}个问题)</div>`;

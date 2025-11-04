@@ -298,8 +298,8 @@ if ($analysis.Memory -eq "Unknown") { $analysis.Memory = $memoryFromBat }
 . (Join-Path $PSScriptRoot "ErrorRules.ps1")
 $errorTypes = Get-ErrorTypes
 
-# 定义需要收集详情的错误类型（同类型只记录一次，但收集所有实例的详细信息）
-$collectDetailsTypes = @('Mod初始化失败', 'Mod加载失败', 'Mod依赖缺失', 'Mod版本不匹配', '模型加载失败', '资源路径错误', '资源注册缺失', 'Mod状态异常', 'Mod跳过加载', '一般错误', '致命错误')
+# 自动从规则中提取需要收集详情的错误类型
+$collectDetailsTypes = @($errorTypes | Where-Object { $_.CollectDetails -eq $true } | ForEach-Object { $_.Type })
 
 for ($i = 0; $i -lt $logContent.Count; $i++) {
     $line = $logContent[$i]
@@ -343,7 +343,21 @@ for ($i = 0; $i -lt $logContent.Count; $i++) {
                     $shouldAdd = $true
                 } else {
                     # 已存在，直接更新数组中的对象
-                    if ($errType.Type -eq 'Mod初始化失败') {
+                    if ($errType.Type -eq 'Fabric环境安装了Forge Mod' -or $errType.Type -eq 'Forge环境安装了Fabric Mod') {
+                        # 提取并合并错误的Mod文件名
+                        if (!$analysis.Errors[$existingIndex].Details) { 
+                            $analysis.Errors[$existingIndex].Details = @() 
+                        }
+                        $lines = $fullContent -split "`n"
+                        foreach ($modLine in $lines) {
+                            if ($modLine -match '^\s*-\s*\[.*?\]\s*([^\s]+\.jar)') {
+                                $jarName = $matches[1]
+                                if ($analysis.Errors[$existingIndex].Details -notcontains $jarName) {
+                                    $analysis.Errors[$existingIndex].Details += $jarName
+                                }
+                            }
+                        }
+                    } elseif ($errType.Type -eq 'Mod初始化失败') {
                         if ($fullContent -match 'for modid\s+(\w+)') {
                             if (!$analysis.Errors[$existingIndex].Details) { 
                                 $analysis.Errors[$existingIndex].Details = @() 
@@ -427,7 +441,33 @@ for ($i = 0; $i -lt $logContent.Count; $i++) {
                 $newError = @{ Type = $errType.Type; Severity = $errType.Severity; Priority = $errType.Priority; Content = $fullContent }
                 # 初始化计数和详情
                 if ($collectDetailsTypes -contains $errType.Type) {
-                    if ($errType.Type -eq 'Mod初始化失败') {
+                    if ($errType.Type -eq 'Fabric环境安装了Forge Mod' -or $errType.Type -eq 'Forge环境安装了Fabric Mod') {
+                        # 提取错误的Mod文件名
+                        $newError.Details = @()
+                        $lines = $fullContent -split "`n"
+                        foreach ($modLine in $lines) {
+                            # 匹配格式：	- [名称] filename.jar 或   - [名称] filename.jar
+                            if ($modLine -match '^\s*-\s*\[.*?\]\s*([^\s]+\.jar)') {
+                                $jarName = $matches[1]
+                                if ($newError.Details -notcontains $jarName) {
+                                    $newError.Details += $jarName
+                                }
+                            }
+                        }
+                    } elseif ($errType.Type -eq 'Mod与MC版本不兼容') {
+                        # Mod与MC版本不兼容：提取Mod名称
+                        $newError.Details = @()
+                        $lines = $fullContent -split "`n"
+                        foreach ($modLine in $lines) {
+                            # 提取Mod名称：'ModName' (modid) version
+                            if ($modLine -match "['']([^'']+)[''][^)]*\(([^)]+)\)\s+([\d\.]+\+mc[\d\.]+)") {
+                                $modName = $matches[1]
+                                if ($newError.Details -notcontains $modName) {
+                                    $newError.Details += $modName
+                                }
+                            }
+                        }
+                    } elseif ($errType.Type -eq 'Mod初始化失败') {
                         # Mod初始化失败：只用Details，不用Count
                         $newError.Details = @()
                         if ($fullContent -match 'for modid\s+(\w+)') {
@@ -487,8 +527,29 @@ for ($i = 0; $i -lt $logContent.Count; $i++) {
         }
     }
     
-    if ($line -match '/ERROR\]|/FATAL\]|^Caused by:') {
-        $analysis.KeyLines += $line.Trim()
+    if ($line -match '/ERROR\]|/FATAL\]|^Caused by:|/WARN\].*(non-fabric mods|non-forge mods)') {
+        $keyLine = $line.Trim()
+        
+        # 对于特定的WARN类型，收集后续的详细列表
+        if ($line -match '/WARN\].*(non-fabric mods|non-forge mods)') {
+            # 收集后续10行的详细列表
+            if ($i + 1 -lt $logContent.Count) {
+                for ($j = 1; $j -le 10; $j++) {
+                    if ($i + $j -lt $logContent.Count) {
+                        $nextLine = $logContent[$i + $j].Trim()
+                        # 包含以 - 或 tab - 开头的列表项
+                        if ($nextLine -match '^\s*-\s*\[' -or $nextLine -match '^\t-') {
+                            $keyLine += "`n  " + $nextLine
+                        } elseif ($nextLine -match '^\[\d+') {
+                            # 遇到新的日志条目就停止
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        
+        $analysis.KeyLines += $keyLine
     }
 }
 
@@ -600,21 +661,31 @@ $(if ($analysis.CrashReport) { "<div class='info-item' style='grid-column:1/-1;b
 "@
 
 # 将错误数据序列化为 JSON（由前端 JavaScript 渲染）
-$collectDetailsTypes = @('Mod初始化失败', '模型加载失败', '资源路径错误', '资源注册缺失', 'Mod状态异常', 'Mod跳过加载', '一般错误', '致命错误', 'Mod加载失败', 'Mod依赖缺失', 'Mod版本不匹配')
-$errorsJsonData = $sortedErrors | ForEach-Object {
+# 强制数组格式 @() 防止单个元素时变成对象
+$errorsJsonData = @($sortedErrors | ForEach-Object {
+    # 清理Content中的乱码字符
+    $cleanContent = if ($_.Content) {
+        $_.Content -replace '[^\x20-\x7E\u4e00-\u9fff\r\n\t]', '?'
+    } else { "" }
+    
     @{
         Type = $_.Type
         Severity = $_.Severity
-        Content = $_.Content
+        Content = $cleanContent
         Count = $_.Count
         Details = $_.Details
         Priority = $_.Priority
         IsCollectDetails = ($collectDetailsTypes -contains $_.Type)
     }
-}
+})
+
 $errorsJson = $errorsJsonData | ConvertTo-Json -Depth 10 -Compress
 if ($null -eq $errorsJson -or $errorsJson -eq "null") {
     $errorsJson = "[]"
+}
+# 强制确保是数组格式（修复PowerShell 5.1的单元素对象bug）
+if ($errorsJson -notmatch '^\s*\[') {
+    $errorsJson = "[$errorsJson]"
 }
 
 # 生成建议HTML

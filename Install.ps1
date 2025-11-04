@@ -1,5 +1,5 @@
 # PCL Log Analyzer - One-Click Install/Update Script
-# Version: 1.0.0
+# Version: 1.0.2
 
 param(
     [string]$CDNUrl = "https://pcl.log.zh8888.top"
@@ -147,8 +147,8 @@ if (Test-Path $localVersionFile) {
 Write-Host ""
 
 # Prepare download
-$zipUrl = "$CDNUrl/PCL-Log-Analyzer.zip"
-$tempZip = Join-Path $env:TEMP "PCL-Log-Analyzer.zip"
+$zipUrl = "$CDNUrl/PCL Log Analyzer.zip"
+$tempZip = Join-Path $env:TEMP "PCL Log Analyzer.zip"
 
 Write-Host "[4/7] Downloading Package..." -ForegroundColor Yellow
 Write-Host "  URL: $zipUrl" -ForegroundColor Gray
@@ -278,9 +278,9 @@ if ($allOk) {
     if (Test-Path $backupPath) {
         Move-Item $backupPath $installPath -Force
         Write-Host "  + Restored previous version" -ForegroundColor Green
-    }
-    
-    Write-Host ""
+}
+
+Write-Host ""
     Write-Host "Please try again or contact support" -ForegroundColor Yellow
 }
 

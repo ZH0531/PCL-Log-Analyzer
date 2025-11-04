@@ -5,7 +5,7 @@
 
 <local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
     <StackPanel Margin="25,40,23,15">
-        <local:MyHint Text="分析游戏日志，自动识别错误类型并提供解决方案&#xA;首次使用请点击安装/更新工具按钮" IsWarn="False"/>
+        <local:MyHint Text="分析游戏日志，自动识别错误类型&#xA;并提供解决方案" IsWarn="False"/>
         
         <!-- 主功能按钮 -->
         <local:MyButton Height="50" Margin="0,15,0,0" ColorType="Highlight"
@@ -58,16 +58,26 @@
 </local:MyCard>
 
 <!-- 版本更新通知（可折叠） -->
-<local:MyCard Title="工具已更新至 V1.0.2 - 请手动点击更新（若已更新请忽略）" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
-    <StackPanel Margin="25,25,23,15">
-        <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#666666"
-            Text=" V1.0.2 更新内容："/>
-        <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
+<local:MyCard Title="⚠️ 工具已更新至 v1.0.2 - 请手动点击更新" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
+    <StackPanel Margin="25,40,23,15">
+        <TextBlock TextWrapping="Wrap" FontSize="13" Foreground="#e74c3c" FontWeight="Bold"
+            Text="⚠️ 重要提示：PCL只会自动更新本页面，工具脚本需手动更新！"/>
+        
+        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0" FontSize="12" Foreground="#2ecc71" FontWeight="Bold"
+            Text="👉 请立即点击上方【安装/更新工具】按钮完成更新！"/>
+        
+        <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="11" Foreground="#666666"
+            Text="✨ v1.0.2 更新内容："/>
+        <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="11" Foreground="#666666"
             Text="• 新增 Fabric/Forge Mod加载器不匹配检测&#xA;• 新增 手动调试崩溃识别（F3+C）&#xA;• 优化 错误识别规则配置系统&#xA;• 修复 关键日志截断问题&#xA;• 修复 单个错误时显示异常问题"/>
-        <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#e67e22" FontWeight="Bold"
+        
+        <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="11" Foreground="#e67e22" FontWeight="Bold"
             Text="💡 首次使用？"/>
-        <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
+        <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="11" Foreground="#666666"
             Text="① 点击【安装/更新工具】完成安装（含环境检查）&#xA;② 点击【分析最新日志】自动分析游戏崩溃原因&#xA;③ 查看自动打开的HTML报告，按建议解决问题"/>
+        
+        <TextBlock TextWrapping="Wrap" Margin="0,12,0,5" FontSize="10" Foreground="#95a5a6" TextAlignment="Center"
+            Text="（完成更新后可点击标题折叠此卡片）"/>
     </StackPanel>
 </local:MyCard>
 
