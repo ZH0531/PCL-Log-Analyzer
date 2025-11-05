@@ -97,10 +97,10 @@ PCL Log Analyzer Dev/
 2. 复制到 PCL 根目录：
    ```
    PCL/
-   ├── Custom.xaml
+   ├── Custom.xaml     # 替换原本的模板文件
    └── PCL Log Analyzer/
    ```
-3. PCL 中配置本地路径：`{PCL目录}\Custom.xaml`
+3. PCL 中 **设置** → **个性化** → **主页**→ **读取本地文件**
 
 ## 🔄 更新机制
 
@@ -124,7 +124,7 @@ PCL Log Analyzer Dev/
 
 1. 修改 `Custom.xaml.ini` 第一行版本号：
    ```ini
-   version=1.0.3
+   version=1.1.0
    ```
 
 2. 运行打包脚本：
@@ -134,7 +134,7 @@ PCL Log Analyzer Dev/
 
 3. 自动完成：
    - ✅ 扫描所有 `.ps1` 和 `.html` 文件
-   - ✅ 自动替换所有文件中的版本号（`v1.0.x` → `v1.0.3`）
+   - ✅ 自动替换所有文件中的版本号（`v1.0.x` → `v1.1.0`）
    - ✅ 计算文件大小并更新 `.ini` 文件
    - ✅ 压缩成 `PCL Log Analyzer.zip`
 
@@ -303,7 +303,15 @@ function Get-ErrorSuggestion {
 | 命令执行失败 | 游戏内命令执行错误 | 轻微 |
 | Mixin应用失败 | Mixin 注入/混入失败 | 中等 |
 
-> **注**：工具只拦截 **ERROR** 和 **FATAL** 级别的日志，WARN 级别不纳入错误统计。
+> **🔍 帮助我们完善错误识别**
+> 
+> 工具主要识别 **ERROR** 和 **FATAL** 级别的日志，部分重要的 **WARN** 级别也会识别（如 Mod 加载器不匹配）。
+> 
+> **我们需要你的帮助！** 🙏
+> - 如果你遇到了工具未能识别的错误类型
+> - 如果你有特殊的崩溃日志
+> - 请在 [GitHub Issues](https://github.com/ZH0531/PCL-Log-Analyzer/issues) 提交日志或反馈
+> - 你的贡献将帮助工具支持更多错误类型，让更多玩家受益！
 
 ## ⚙️ 版本控制文件格式
 
@@ -374,7 +382,7 @@ AnalyzeLogs.ps1 启动
     ├─ 5. 复制为 latest.html
     ├─ 6. 调用 GenerateReportsList.ps1
     │     └─ 生成 reports-list.html
-    └─ 7. 打开报告（浏览器）
+    └─ 7. 自动打开报告（浏览器）
 ```
 
 ## 💡 使用技巧
