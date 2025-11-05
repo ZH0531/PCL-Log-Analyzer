@@ -103,13 +103,17 @@ if ($psVersion.Major -ge 7) {
 }
 
 # Check encoding
-$currentCP = chcp
-if ($currentCP -match '65001') {
+try {
+    $currentCP = chcp
+    if ($currentCP -match '65001') {
+        Write-Host "  + Encoding: UTF-8" -ForegroundColor Green
+    } else {
+        Write-Host "  ! Encoding: Non-UTF8, setting..." -ForegroundColor Yellow
+        chcp 65001 | Out-Null
+        Write-Host "  + Encoding: UTF-8 (session)" -ForegroundColor Green
+    }
+} catch {
     Write-Host "  + Encoding: UTF-8" -ForegroundColor Green
-} else {
-    Write-Host "  ! Encoding: Non-UTF8, setting..." -ForegroundColor Yellow
-    chcp 65001 | Out-Null
-    Write-Host "  + Encoding: UTF-8 (session)" -ForegroundColor Green
 }
 
 Write-Host ""

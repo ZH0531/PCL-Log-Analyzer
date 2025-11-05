@@ -183,16 +183,6 @@ try {
 }
 
 Write-Host ""
-
-# ============================================
-# 显示访问链接
-# ============================================
-$cdnUrl = if ($ossPath) {
-    "https://$ossBucket.$ossEndpoint/$ossPath"
-} else {
-    "https://$ossBucket.$ossEndpoint/"
-}
-
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "  上传完成！" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
