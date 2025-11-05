@@ -86,7 +86,7 @@ Write-Host ""
 # ============================================
 Write-Host "[4/4] 创建压缩包..." -ForegroundColor Yellow
 
-$zipName = "PCL Log Analyzer v$version.zip"
+$zipName = "PCL-Log-Analyzer-v$version.zip"
 $zipPath = Join-Path $devRoot $zipName
 
 # 删除旧的压缩包
