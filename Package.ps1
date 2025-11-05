@@ -4,8 +4,12 @@
 # ============================================
 
 $ErrorActionPreference = "Stop"
+
+# 修复中文显示
+$OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+Clear-Host
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  PCL Log Analyzer - 打包工具" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
@@ -44,19 +48,31 @@ if (-not $versionLine) {
 }
 
 $newVersion = $matches[1].Trim()
+$currentDate = Get-Date -Format 'yyyy-MM-dd'
 Write-Host "  目标版本: $newVersion" -ForegroundColor Green
+Write-Host "  当前日期: $currentDate" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# 步骤 2: 自动替换所有文件中的版本号
+# 步骤 2: 自动替换所有文件中的版本号和日期
 # ============================================
-Write-Host "[2/5] 替换版本号..." -ForegroundColor Yellow
+Write-Host "[2/5] 替换版本号和日期..." -ForegroundColor Yellow
 
-$versionPattern = 'v\d+\.\d+\.\d+'
-$replacementPattern = "v$newVersion"
+$versionPattern1 = 'v\d+\.\d+\.\d+'           # 匹配 v1.0.2
+$versionPattern2 = '版本：\d+\.\d+\.\d+'        # 匹配 版本：1.0.2
+$datePattern = '更新日期：\d{4}-\d{2}-\d{2}'   # 匹配 更新日期：2025-11-04
+$replacementPattern1 = "v$newVersion"
+$replacementPattern2 = "版本：$newVersion"
+$replacementDate = "更新日期：$(Get-Date -Format 'yyyy-MM-dd')"
 
 $filesToUpdate = Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
     $_.Extension -eq '.ps1' -or $_.Extension -eq '.html'
+}
+
+# 同时处理 Custom.xaml
+$customXamlPath = Join-Path $devRoot "Custom.xaml"
+if (Test-Path $customXamlPath) {
+    $filesToUpdate += Get-Item $customXamlPath
 }
 
 $updatedCount = 0
@@ -64,12 +80,14 @@ foreach ($file in $filesToUpdate) {
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
     $originalContent = $content
     
-    # 替换版本号（使用正则表达式）
-    $content = $content -replace $versionPattern, $replacementPattern
+    # 替换版本号和日期（三种格式都替换）
+    $content = $content -replace $versionPattern1, $replacementPattern1
+    $content = $content -replace $versionPattern2, $replacementPattern2
+    $content = $content -replace $datePattern, $replacementDate
     
     if ($content -ne $originalContent) {
         $content | Out-File -FilePath $file.FullName -Encoding UTF8 -NoNewline
-        $relativePath = $file.FullName.Replace($toolDir + '\', '')
+        $relativePath = $file.FullName.Replace($devRoot + '\', '')
         Write-Host "  ✓ $relativePath" -ForegroundColor Gray
         $updatedCount++
     }
@@ -108,8 +126,8 @@ Write-Host ""
 # ============================================
 Write-Host "[4/5] 更新版本文件..." -ForegroundColor Yellow
 
-# 生成版本文件内容（第一行是版本号）
-$versionContent = @($newVersion)
+# 生成版本文件内容（第一行是 version=x.x.x）
+$versionContent = @("version=$newVersion")
 foreach ($file in ($fileList | Sort-Object Path)) {
     $versionContent += "$($file.Path)=$($file.Size)"
 }
@@ -156,6 +174,7 @@ Write-Host "  - Custom.xaml.ini (已更新)" -ForegroundColor White
 Write-Host "  - PCL Log Analyzer.zip" -ForegroundColor White
 Write-Host ""
 Write-Host "版本: $newVersion" -ForegroundColor Gray
+Write-Host "日期: $currentDate" -ForegroundColor Gray
 Write-Host "文件数: $($fileList.Count)" -ForegroundColor Gray
 Write-Host "ZIP大小: $zipSize KB" -ForegroundColor Gray
 Write-Host ""

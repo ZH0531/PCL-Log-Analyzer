@@ -14,6 +14,74 @@ try {
 
 $ErrorActionPreference = "Stop"
 
+# ============================================
+# 带进度条的下载函数
+# ============================================
+function Download-WithProgress {
+    param(
+        [string]$Url,
+        [string]$OutputPath
+    )
+    
+    $frames = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+    $frameIndex = 0
+    
+    # 创建WebClient
+    $webClient = New-Object System.Net.WebClient
+    
+    # 注册进度事件
+    $progressScript = {
+        param($sender, $e)
+        
+        $received = $e.BytesReceived / 1KB
+        $total = $e.TotalBytesToReceive / 1KB
+        $percent = if ($total -gt 0) { [Math]::Floor(($received / $total) * 100) } else { 0 }
+        
+        # 进度条长度 20 个字符
+        $barLength = 20
+        $filled = [Math]::Floor($barLength * $percent / 100)
+        $empty = $barLength - $filled
+        $bar = ('█' * $filled) + ('░' * $empty)  # 实心块
+        
+        # 动画帧
+        $frame = $script:currentFrame
+        
+        # 显示进度（在同一行更新）
+        Write-Host "`r  $frame $bar $percent% ($([Math]::Round($received, 1)) KB / $([Math]::Round($total, 1)) KB)" -NoNewline -ForegroundColor Cyan
+    }
+    
+    Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action $progressScript | Out-Null
+    
+    try {
+        # 启动异步下载
+        $download = $webClient.DownloadFileTaskAsync($Url, $OutputPath)
+        
+        # 动画循环（直到下载完成）
+        while (!$download.IsCompleted) {
+            $script:currentFrame = $frames[$frameIndex % $frames.Length]
+            $frameIndex++
+            Start-Sleep -Milliseconds 100
+        }
+        
+        # 等待下载完成
+        $download.Wait()
+        
+        # 稍等确保进度事件完成
+        Start-Sleep -Milliseconds 200
+        
+        # 覆盖进度条显示完成信息
+        $fileSize = [Math]::Round((Get-Item $OutputPath).Length / 1KB, 1)
+        $clearLine = ' ' * 100
+        Write-Host "`r$clearLine" -NoNewline
+        Write-Host "`r  ✓ 下载完成: $fileSize KB" -ForegroundColor Green
+        
+    } finally {
+        # 清理事件
+        Get-EventSubscriber | Where-Object { $_.SourceObject -eq $webClient } | Unregister-Event
+        $webClient.Dispose()
+    }
+}
+
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "  PCL Log Analyzer - Setup Wizard" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
@@ -187,13 +255,10 @@ $tempZip = Join-Path $env:TEMP "PCL Log Analyzer.zip"
 
 Write-Host "[4/7] Downloading Package..." -ForegroundColor Yellow
 Write-Host "  URL: $zipUrl" -ForegroundColor Gray
+Write-Host ""
 
 try {
-    # Download file (silent progress)
-    $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest -Uri $zipUrl -OutFile $tempZip -UseBasicParsing
-    $fileSize = [Math]::Round((Get-Item $tempZip).Length / 1KB, 1)
-    Write-Host "  + Downloaded: $fileSize KB" -ForegroundColor Green
+    Download-WithProgress -Url $zipUrl -OutputPath $tempZip
 } catch {
     Write-Host "  [ERROR] Download failed: $_" -ForegroundColor Red
     Write-Host ""
