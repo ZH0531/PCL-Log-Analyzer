@@ -65,7 +65,7 @@ if ($CustomLogPath -and (Test-Path $CustomLogPath)) {
 }
 
 if (!$skipAutoFind) {
-    Write-Host "[步骤 1/5] 查找最新版本..." -ForegroundColor Yellow
+    Write-Host "[步骤 1/5] 查找最近一次游戏版本..." -ForegroundColor Yellow
     $lastVersion = $null
     $lastVersionPath = $null
     $javaFromBat = "Unknown"
