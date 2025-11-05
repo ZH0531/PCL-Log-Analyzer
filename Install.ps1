@@ -6,13 +6,17 @@ param(
     [string]$CDNUrl = "https://pcl.log.zh8888.top"
 )
 
+$ErrorActionPreference = "Stop"
+
 try {
+    $ErrorActionPreference = "SilentlyContinue"
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     $OutputEncoding = [System.Text.Encoding]::UTF8
     chcp 65001 | Out-Null
-} catch {}
-
-$ErrorActionPreference = "Stop"
+    $ErrorActionPreference = "Stop"
+} catch {
+    $ErrorActionPreference = "Stop"
+}
 
 # ============================================
 # 带进度条的下载函数
@@ -26,7 +30,7 @@ function Download-WithProgress {
     $frames = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
     $frameIndex = 0
     
-    # 创建WebClient
+    # 创建 WebClient 对象
     $webClient = New-Object System.Net.WebClient
     
     # 注册进度事件
@@ -37,16 +41,16 @@ function Download-WithProgress {
         $total = $e.TotalBytesToReceive / 1KB
         $percent = if ($total -gt 0) { [Math]::Floor(($received / $total) * 100) } else { 0 }
         
-        # 进度条长度 20 个字符
-        $barLength = 20
+        # 进度条长度：50 字符
+        $barLength = 50
         $filled = [Math]::Floor($barLength * $percent / 100)
         $empty = $barLength - $filled
-        $bar = ('█' * $filled) + ('░' * $empty)  # 实心块
+        $bar = ('█' * $filled) + ('░' * $empty)  # 实心方块
         
         # 动画帧
         $frame = $script:currentFrame
         
-        # 显示进度（在同一行更新）
+        # 显示进度（同一行更新）
         Write-Host "`r  $frame $bar $percent% ($([Math]::Round($received, 1)) KB / $([Math]::Round($total, 1)) KB)" -NoNewline -ForegroundColor Cyan
     }
     
@@ -66,10 +70,10 @@ function Download-WithProgress {
         # 等待下载完成
         $download.Wait()
         
-        # 稍等确保进度事件完成
+        # 等待以确保进度事件完成
         Start-Sleep -Milliseconds 200
         
-        # 覆盖进度条显示完成信息
+        # 用完成消息覆盖进度条
         $fileSize = [Math]::Round((Get-Item $OutputPath).Length / 1KB, 1)
         $clearLine = ' ' * 100
         Write-Host "`r$clearLine" -NoNewline
@@ -83,16 +87,16 @@ function Download-WithProgress {
 }
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "  PCL Log Analyzer - Setup Wizard" -ForegroundColor Cyan
+Write-Host "  PCL Log Analyzer - 安装向导" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Detect PCL root directory (use current working directory)
+# 检测 PCL 根目录（使用当前工作目录）
 $pclRoot = (Get-Location).Path
 
-Write-Host "[1/6] Environment Check..." -ForegroundColor Yellow
+Write-Host "[1/6] 环境检查..." -ForegroundColor Yellow
 
-# Check PowerShell version
+# 检查 PowerShell 版本
 $psVersion = $PSVersionTable.PSVersion
 if ($psVersion.Major -ge 7) {
     Write-Host "  + PowerShell: $($psVersion.Major).$($psVersion.Minor) (Core)" -ForegroundColor Green
@@ -102,30 +106,30 @@ if ($psVersion.Major -ge 7) {
     Write-Host "  + PowerShell: $($psVersion.Major).$($psVersion.Minor)" -ForegroundColor Green
 }
 
-# Check encoding
+# 检查编码
 try {
-    $currentCP = chcp
-    if ($currentCP -match '65001') {
-        Write-Host "  + Encoding: UTF-8" -ForegroundColor Green
-    } else {
-        Write-Host "  ! Encoding: Non-UTF8, setting..." -ForegroundColor Yellow
-        chcp 65001 | Out-Null
-        Write-Host "  + Encoding: UTF-8 (session)" -ForegroundColor Green
+$currentCP = chcp
+if ($currentCP -match '65001') {
+        Write-Host "  ✓ 编码: UTF-8" -ForegroundColor Green
+} else {
+        Write-Host "  ! 编码: 非 UTF-8，正在设置..." -ForegroundColor Yellow
+    chcp 65001 | Out-Null
+        Write-Host "  ✓ 编码: UTF-8 (会话)" -ForegroundColor Green
     }
 } catch {
-    Write-Host "  + Encoding: UTF-8" -ForegroundColor Green
+    Write-Host "  ✓ 编码: UTF-8" -ForegroundColor Green
 }
 
 Write-Host ""
 
-Write-Host "[2/7] Detecting Install Location..." -ForegroundColor Yellow
-Write-Host "  PCL Root: $pclRoot" -ForegroundColor White
+Write-Host "[2/7] 检测安装位置..." -ForegroundColor Yellow
+Write-Host "  ✓ PCL 根目录: $pclRoot" -ForegroundColor White
 $installPath = Join-Path $pclRoot "PCL Log Analyzer"
 Write-Host ""
 
-Write-Host "[3/7] Checking Version..." -ForegroundColor Yellow
+Write-Host "[3/7] 检查版本..." -ForegroundColor Yellow
 
-# Download remote version file
+# 下载远程版本文件
 $versionUrl = "$CDNUrl/Custom.xaml.ini"
 $tempVersion = Join-Path $env:TEMP "remote.version"
 
@@ -134,7 +138,7 @@ try {
     Invoke-WebRequest -Uri $versionUrl -OutFile $tempVersion -UseBasicParsing
     $versionContent = Get-Content $tempVersion
     
-    # Parse version (first line: version=x.x.x)
+    # 解析版本（第一行：version=x.x.x）
     $versionLine = $versionContent[0].Trim()
     if ($versionLine -match '^version=(.+)$') {
         $remoteVersion = $matches[1]
@@ -142,7 +146,7 @@ try {
         throw "Invalid version file format. Expected: version=x.x.x"
     }
     
-    # Parse file sizes from version file
+    # 从版本文件解析文件大小
     $remoteFileSizes = @{}
     for ($i = 1; $i -lt $versionContent.Length; $i++) {
         if ($versionContent[$i] -match '^(.+)=(\d+)$') {
@@ -151,14 +155,14 @@ try {
     }
     
     Remove-Item $tempVersion -Force
-    Write-Host "  Remote Version: $remoteVersion" -ForegroundColor Cyan
+    Write-Host "  远程版本: $remoteVersion" -ForegroundColor Cyan
 } catch {
-    Write-Host "  ! Cannot fetch remote version, continue anyway" -ForegroundColor Yellow
+    Write-Host "  ! 无法获取远程版本，继续执行" -ForegroundColor Yellow
     $remoteVersion = $null
     $remoteFileSizes = @{}
 }
 
-# Check local version
+# 检查本地版本
 $localVersionFile = Join-Path $installPath "Custom.xaml.ini"
 $needsInstall = $true
 
@@ -166,140 +170,140 @@ if (Test-Path $localVersionFile) {
     $localVersionContent = Get-Content $localVersionFile
     $localVersionLine = $localVersionContent[0].Trim()
     
-    # Parse version (first line: version=x.x.x)
+    # 解析版本（第一行：version=x.x.x）
     if ($localVersionLine -match '^version=(.+)$') {
         $localVersion = $matches[1]
     } else {
         $localVersion = "Unknown"
     }
     
-    Write-Host "  Local Version:  $localVersion" -ForegroundColor Cyan
+    Write-Host "  本地版本:  $localVersion" -ForegroundColor Cyan
     
-    # Verify file integrity if version matches
+    # 如果版本匹配则验证文件完整性
     if (-not $remoteVersion) {
-        # Remote version unavailable, cannot verify
-        Write-Host "  ! Cannot verify version, skipping update check" -ForegroundColor Yellow
+        # 远程版本不可用，无法验证
+        Write-Host "  ! 无法验证版本，跳过更新检查" -ForegroundColor Yellow
         $needsInstall = $false
     }
     elseif ($localVersion -eq $remoteVersion) {
-        Write-Host "  Checking file integrity..." -ForegroundColor Gray
+        Write-Host "  正在检查文件完整性..." -ForegroundColor Gray
         
         $allFilesOk = $true
         
-        # Check all files listed in version file
+        # 检查版本文件中列出的所有文件
         foreach ($fileEntry in $remoteFileSizes.Keys) {
             $fullPath = Join-Path $installPath $fileEntry
             $expectedSize = $remoteFileSizes[$fileEntry]
             
             if (-not (Test-Path $fullPath)) {
-                Write-Host "    ! Missing: $fileEntry" -ForegroundColor Yellow
+                Write-Host "    ! 文件缺失: $fileEntry" -ForegroundColor Yellow
                 $allFilesOk = $false
                 break
             }
             
-            # Check file size with tolerance (±1KB)
+            # 检查文件大小（容差 ±1KB）
             $actualSize = (Get-Item $fullPath).Length
             $tolerance = 1024
             $sizeDiff = [Math]::Abs($actualSize - $expectedSize)
             
             if ($sizeDiff -gt $tolerance) {
-                Write-Host "    ! Size mismatch: $fileEntry" -ForegroundColor Yellow
-                Write-Host "      Expected: ~$expectedSize bytes, Got: $actualSize bytes" -ForegroundColor Gray
+                Write-Host "    ! 文件大小不匹配: $fileEntry" -ForegroundColor Yellow
+                Write-Host "      预期: ~$expectedSize 字节, 实际: $actualSize 字节" -ForegroundColor Gray
                 $allFilesOk = $false
                 break
             }
         }
         
         if ($allFilesOk) {
-            Write-Host "    All files intact" -ForegroundColor Green
+            Write-Host "    ✓ 所有文件完整" -ForegroundColor Green
             Write-Host ""
             Write-Host "=========================================" -ForegroundColor Green
-            Write-Host "  Already Up-to-Date!" -ForegroundColor Green
+            Write-Host "  ✓ 已是最新版本！" -ForegroundColor Green
             Write-Host "=========================================" -ForegroundColor Green
             Write-Host ""
-            Write-Host "Current version: $localVersion" -ForegroundColor White
-            Write-Host "No update needed." -ForegroundColor Gray
+            Write-Host "✓ 当前版本: $localVersion" -ForegroundColor White
+            Write-Host "✓ 无需更新" -ForegroundColor Gray
             Write-Host ""
-            Write-Host "Window will close in 3 seconds..." -ForegroundColor Gray
+            Write-Host "窗口将在 3 秒后关闭..." -ForegroundColor Gray
             Start-Sleep -Seconds 3
             Stop-Process -Id $PID
         } else {
-            Write-Host "    Files damaged, reinstalling..." -ForegroundColor Yellow
+            Write-Host "    ! 文件已损坏，正在重新安装..." -ForegroundColor Yellow
             $needsInstall = $true
         }
     } else {
-        Write-Host "  Update available: $localVersion -> $remoteVersion" -ForegroundColor Green
+        Write-Host "  ✓ 发现更新: $localVersion -> $remoteVersion" -ForegroundColor Green
         $needsInstall = $true
     }
 } else {
-    Write-Host "  Local Version:  Not installed" -ForegroundColor Gray
-    Write-Host "  First time installation" -ForegroundColor Green
+    Write-Host "  本地版本:  未安装" -ForegroundColor Gray
+    Write-Host "  ✓ 首次安装" -ForegroundColor Green
     $needsInstall = $true
 }
 
 Write-Host ""
 
-# Skip download if not needed
+# 如果不需要则跳过下载
 if (-not $needsInstall) {
     Write-Host "=========================================" -ForegroundColor Yellow
-    Write-Host "  Installation Skipped" -ForegroundColor Yellow
+    Write-Host "  跳过安装" -ForegroundColor Yellow
     Write-Host "=========================================" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Reason: Cannot connect to update server" -ForegroundColor Gray
-    Write-Host "Your local installation appears intact." -ForegroundColor Gray
+    Write-Host "原因: 无法连接到更新服务器" -ForegroundColor Gray
+    Write-Host "您的本地安装似乎完好。" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "Window will close in 5 seconds..." -ForegroundColor Gray
+    Write-Host "窗口将在 5 秒后关闭..." -ForegroundColor Gray
     Start-Sleep -Seconds 5
     exit 0
 }
 
-# Prepare download
+# 准备下载
 $zipUrl = "$CDNUrl/PCL Log Analyzer.zip"
 $tempZip = Join-Path $env:TEMP "PCL Log Analyzer.zip"
 
-Write-Host "[4/7] Downloading Package..." -ForegroundColor Yellow
+Write-Host "[4/7] 下载安装包..." -ForegroundColor Yellow
 Write-Host "  URL: $zipUrl" -ForegroundColor Gray
 Write-Host ""
 
 try {
     Download-WithProgress -Url $zipUrl -OutputPath $tempZip
 } catch {
-    Write-Host "  [ERROR] Download failed: $_" -ForegroundColor Red
+    Write-Host "  [错误] 下载失败: $_" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Please check your network or CDN address" -ForegroundColor Yellow
+    Write-Host "请检查您的网络连接或 CDN 地址" -ForegroundColor Yellow
     Start-Sleep -Seconds 5
     exit 1
 }
 
 Write-Host ""
-Write-Host "[5/7] Installing Files..." -ForegroundColor Yellow
+Write-Host "[5/7] 安装文件..." -ForegroundColor Yellow
 
 try {
-    # Backup if exists
+    # 如果存在则备份
     if (Test-Path $installPath) {
         $backupPath = "$installPath.backup"
         if (Test-Path $backupPath) {
             Remove-Item $backupPath -Recurse -Force
         }
-        Write-Host "  Old version detected, backing up..." -ForegroundColor Gray
+        Write-Host "  检测到旧版本，正在备份..." -ForegroundColor Gray
         Move-Item $installPath $backupPath -Force
     }
     
-    # Extract files
+    # 解压文件
     Expand-Archive -Path $tempZip -DestinationPath $pclRoot -Force
-    Write-Host "  + Extracted to: $installPath" -ForegroundColor Green
+    Write-Host "  ✓ 已解压到: $installPath" -ForegroundColor Green
     
-    # Clean temp file
+    # 清理临时文件
     Remove-Item $tempZip -Force
     
-    # Migrate reports if backup exists
+    # 如果备份存在则迁移报告
     $backupPath = "$installPath.backup"
     if (Test-Path $backupPath) {
         $oldReports = Join-Path $backupPath "Reports"
         $newReports = Join-Path $installPath "Reports"
         
         if ((Test-Path $oldReports) -and (Test-Path $newReports)) {
-            Write-Host "  Migrating report history..." -ForegroundColor Gray
+            Write-Host "  ✓ 正在迁移历史报告..." -ForegroundColor Gray
             Copy-Item "$oldReports\*.html" $newReports -Force -ErrorAction SilentlyContinue
         }
         
@@ -307,12 +311,12 @@ try {
     }
     
 } catch {
-    Write-Host "  [ERROR] Installation failed: $_" -ForegroundColor Red
+    Write-Host "  [错误] 安装失败: $_" -ForegroundColor Red
     
-    # Try to restore backup
+    # 尝试恢复备份
     $backupPath = "$installPath.backup"
     if (Test-Path $backupPath) {
-        Write-Host "  Restoring backup..." -ForegroundColor Yellow
+        Write-Host "  正在恢复备份..." -ForegroundColor Yellow
         if (Test-Path $installPath) {
             Remove-Item $installPath -Recurse -Force
         }
@@ -324,7 +328,7 @@ try {
 }
 
 Write-Host ""
-Write-Host "[6/7] Verifying Installation..." -ForegroundColor Yellow
+Write-Host "[6/7] 验证安装..." -ForegroundColor Yellow
 
 $requiredFiles = @(
     "Scripts\AnalyzeLogs.ps1",
@@ -343,63 +347,63 @@ $allOk = $true
 foreach ($file in $requiredFiles) {
     $fullPath = Join-Path $installPath $file
     if (Test-Path $fullPath) {
-        Write-Host "  + $file" -ForegroundColor Green
+        Write-Host "  ✓ $file" -ForegroundColor Green
     } else {
-        Write-Host "  - $file (missing)" -ForegroundColor Red
+        Write-Host "  ✗ $file (缺失)" -ForegroundColor Red
         $allOk = $false
     }
 }
 
 Write-Host ""
-Write-Host "[7/7] Finalizing..." -ForegroundColor Yellow
-Write-Host "  + All scripts configured with UTF-8" -ForegroundColor Green
-Write-Host "  + Ready to use" -ForegroundColor Green
+Write-Host "[7/7] 完成安装..." -ForegroundColor Yellow
+Write-Host "  ✓ 脚本编码已配置为 UTF-8 with BOM" -ForegroundColor Green
+Write-Host "  ✓ 所有组件就绪" -ForegroundColor Green
 
 Write-Host ""
 if ($allOk) {
     Write-Host "=========================================" -ForegroundColor Green
-    Write-Host "  Installation Complete!" -ForegroundColor Green
+    Write-Host "  ✓ 安装完成！" -ForegroundColor Green
     Write-Host "=========================================" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Now you can:" -ForegroundColor Cyan
-    Write-Host "  * Click [Analyze Latest Log] to start" -ForegroundColor White
-    Write-Host "  * Click [Manual Select Log] for custom analysis" -ForegroundColor White
+    Write-Host "现在您可以:" -ForegroundColor Cyan
+    Write-Host "  ✓ 点击【分析最新日志】开始使用" -ForegroundColor White
+    Write-Host "  ✓ 点击【手动选择日志】进行自定义分析" -ForegroundColor White
 } else {
     Write-Host "=========================================" -ForegroundColor Red
-    Write-Host "  Installation Failed!" -ForegroundColor Red
+    Write-Host "  安装失败！" -ForegroundColor Red
     Write-Host "=========================================" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Possible causes:" -ForegroundColor Yellow
-    Write-Host "  * Network interruption during download" -ForegroundColor White
-    Write-Host "  * Package corruption or tampering" -ForegroundColor White
+    Write-Host "可能的原因:" -ForegroundColor Yellow
+    Write-Host "  * 下载过程中网络中断" -ForegroundColor White
+    Write-Host "  * 安装包损坏或被篡改" -ForegroundColor White
     Write-Host ""
-    Write-Host "Cleaning up..." -ForegroundColor Yellow
+    Write-Host "正在清理..." -ForegroundColor Yellow
     
-    # Remove corrupted installation
+    # 删除损坏的安装
     if (Test-Path $installPath) {
         Remove-Item $installPath -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "  + Removed corrupted files" -ForegroundColor Green
+        Write-Host "  ✓ 已删除损坏的文件" -ForegroundColor Green
     }
     
-    # Restore backup if exists
+    # 如果存在则恢复备份
     $backupPath = "$installPath.backup"
     if (Test-Path $backupPath) {
         Move-Item $backupPath $installPath -Force
-        Write-Host "  + Restored previous version" -ForegroundColor Green
+        Write-Host "  ✓ 已恢复旧版本" -ForegroundColor Green
 }
 
 Write-Host ""
-    Write-Host "Please try again or contact support" -ForegroundColor Yellow
+    Write-Host "请重试或联系支持" -ForegroundColor Yellow
 }
 
 Write-Host ""
-Write-Host "Window will close in 5 seconds..." -ForegroundColor Gray
+Write-Host "窗口将在 5 秒后关闭..." -ForegroundColor Gray
 for ($i = 5; $i -gt 0; $i--) {
     Write-Host "  $i..." -NoNewline -ForegroundColor Cyan
     Start-Sleep -Seconds 1
 }
 Write-Host ""
 
-# Force close window
+# 强制关闭窗口
 Stop-Process -Id $PID
 

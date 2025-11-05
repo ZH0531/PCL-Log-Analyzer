@@ -90,22 +90,28 @@ PCL Log Analyzer Dev/
 
 ---
 
+### 本地部署（不依赖在线更新）
 
-## 🔄 更新机制
+如果你无法连接到 CDN 或希望离线使用，可以手动部署：
 
-### 用户端更新
+1. 前往 [Releases](https://github.com/ZH0531/PCL-Log-Analyzer/releases) 下载最新的 **完整发布包**
+2. 解压下载的压缩包到 PCL 根目录（即 `PCL/` 文件夹）
+3. 打开 **PCL 启动器** → **设置** → **个性化** → **主页** → **读取本地文件**
+4. 点击刷新主页
 
-1. 在 PCL 主页点击 **🔄 安装/更新工具**
-2. Install.ps1 自动检测版本：
-   - 版本相同 → 验证文件完整性
-   - 有新版本 → 下载更新
-   - 网络故障 → 跳过更新
-3. 安全更新流程：
-   - 临时备份旧版本到 `.backup` 文件夹
-   - 解压并安装新版本
-   - 迁移所有历史报告
-   - 删除临时备份（安装成功）
-   - 或自动回滚（安装失败）
+> **注意**：本地部署后将无法使用在线更新功能，需要手动下载新版本替换。
+
+---
+
+## 🔄 更新方法
+
+在 PCL 主页点击 **🔄 安装/更新工具** 即可自动更新到最新版本。
+
+**工具会自动：**
+- 检测新版本
+- 下载并安装
+- 保留所有历史报告
+- 失败时自动回滚
 
 
 
@@ -184,6 +190,9 @@ Templates/reports-list-template.html=15000
   可选：刷新 CDN 缓存
        ↓
   CDN 分发 (https://pcl.log.zh8888.top/)
+  ```
+  
+  ```
 
 用户端:
   PCL 主页 Custom.xaml (联网更新)
@@ -194,6 +203,17 @@ Templates/reports-list-template.html=15000
        ↓
   自动安装/更新到本地
 ```
+
+**更新流程说明**：
+
+| 场景 | 行为 |
+|------|------|
+| 首次安装 | 下载并安装 |
+| 版本相同 + 文件完整 | 退出（无需更新） |
+| 版本相同 + 文件损坏 | 重新下载修复 |
+| 有新版本 | 备份 → 下载 → 安装 → 迁移报告 → 删除备份 |
+| 更新失败 | 自动回滚到备份版本 |
+| 本地已安装 + 无法连接CDN | 跳过更新，使用本地版本 |
 
 ## 📊 工作流程图
 
@@ -228,7 +248,7 @@ AnalyzeLogs.ps1 启动
 ### 必需
 - **操作系统**：Windows 10/11
 - **PowerShell**：5.1+ （Windows 10 自带）
-- **启动器**：Plain Craft Launcher 2.x
+- **启动器**：Plain Craft Launcher 2（PCL2）
 
 ### 可选
 - **浏览器**：用于查看 HTML 报告（系统默认浏览器）
@@ -256,8 +276,9 @@ AnalyzeLogs.ps1 启动
 ```
 
 **日志获取方式**：
-1. `.minecraft/versions/{版本}/logs/latest.log` 
-2. 或直接提交生成的 HTML 报告（包含所有信息）
+1. 游戏崩溃后，点击 PCL 弹窗的 **导出错误报告** 按钮
+2. 或在 `.minecraft/versions/{版本}/logs/latest.log` 手动获取
+3. 或直接提交本工具生成的 HTML 报告（包含所有信息）
 
 ---
 
@@ -273,7 +294,7 @@ AnalyzeLogs.ps1 启动
 - 📖 **完善文档**
 
 **PR 流程**：
-1. Fork 本仓库（请将本仓库放在 `PCL/` 目录下，并改名为`PCL Log Analyzer Dev`）
+1. Fork 本仓库（请将本仓库放在 `/PCL` 目录下，并改名为`PCL Log Analyzer Dev`）
 2. 创建新分支：`git checkout -b feature/your-feature`
 3. 提交更改：`git commit -m "Add: your description"`
 4. Push 分支：`git push origin feature/your-feature`
@@ -295,14 +316,17 @@ function Get-ErrorTypes {
     return @(
         # ... 其他规则 ...
         
-        # 你的新规则
+        # 你的新规则（哈希表内用分号，数组元素末尾用逗号）
         @{ 
-            Pattern = '/ERROR\].*你的正则表达式'  # 正则匹配模式
-            Type = '新错误类型'                  # 错误类型名称
-            Severity = '严重'                    # 严重/中等/轻微
-            Priority = 25                        # 优先级（数字越小越优先）
-            CollectDetails = $true               # 是否收集详情（可选）
-        }
+            Pattern = '/ERROR\].*你的正则表达式';  # 正则匹配模式
+            Type = '新错误类型';                   # 错误类型名称
+            Severity = '严重';                     # 严重/中等/轻微
+            Priority = 25;                         # 优先级（数字越小越优先）
+            CollectDetails = $true                 # 最后一个属性不需要分号
+        },
+        
+        # 最后一个规则可以不加逗号
+        @{ Pattern = '/ERROR\]'; Type = '一般错误'; Severity = '中等'; Priority = 50 }
     )
 }
 ```
@@ -317,7 +341,7 @@ function Get-ErrorSuggestion {
         
         '新错误类型' { 
             return @{ 
-                Title = 'YourID'                     # 建议标识（简短唯一）
+                Title = 'YourID';                                        # 建议标识（简短唯一）
                 Text = '问题描述和解决方法：①第一步 ②第二步 ③第三步'  # 建议内容
             }
         }
@@ -327,12 +351,15 @@ function Get-ErrorSuggestion {
 
 **完整示例（添加Java版本检测）**：
 ```powershell
-# 在 Get-ErrorTypes 中：
-@{ Pattern = '/ERROR\].*UnsupportedClassVersionError'; Type = 'Java版本过低'; Severity = '严重'; Priority = 17 }
+# 在 Get-ErrorTypes 中添加（哈希表内用分号，数组元素末尾用逗号）：
+@{ Pattern = '/ERROR\].*UnsupportedClassVersionError'; Type = 'Java版本过低'; Severity = '严重'; Priority = 17 },
 
-# 在 Get-ErrorSuggestion 中：
+# 在 Get-ErrorSuggestion 中添加：
 'Java版本过低' { 
-    return @{ Title = 'Java'; Text = 'Java版本不兼容：当前Java版本过低。解决方法：在PCL设置中切换到Java 17或更高版本' }
+    return @{ 
+        Title = 'Java'; 
+        Text = 'Java版本不兼容：当前Java版本过低。解决方法：在PCL设置中切换到Java 17或更高版本' 
+    }
 }
 ```
 

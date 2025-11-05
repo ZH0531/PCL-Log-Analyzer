@@ -30,7 +30,7 @@
             <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="40"
                 Text="🔄 安装/更新工具" 
                 EventType="打开文件" 
-                EventData="powershell.exe|-ExecutionPolicy Bypass -Command &quot;$pclRoot='{path}PCL'; cd $pclRoot; $script=irm 'https://pcl.log.zh8888.top/Install.ps1'; iex $script&quot;"
+                EventData="powershell.exe|-ExecutionPolicy Bypass -Command &quot;Set-Location '{path}PCL'; $ProgressPreference='SilentlyContinue'; $temp=[IO.Path]::Combine($env:TEMP,'PCL-Install.ps1'); Invoke-WebRequest -Uri 'https://pcl.log.zh8888.top/Install.ps1' -OutFile $temp -UseBasicParsing; &amp; $temp&quot;"
                 ToolTip="首次使用点此安装，或更新到最新版本（包含环境检查）"/>
         </Grid>
 
