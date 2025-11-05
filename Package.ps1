@@ -1,5 +1,7 @@
-﻿# PCL Log Analyzer - 打包脚本
-# 功能：更新版本文件并打包工具
+﻿# ============================================
+# PCL Log Analyzer - 打包脚本
+# 功能：自动替换版本号、更新文件大小并打包工具
+# ============================================
 
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -20,26 +22,66 @@ if (-not (Test-Path $toolDir)) {
 }
 
 # ============================================
-# 步骤 1: 读取当前版本号
+# 步骤 1: 读取版本号配置
 # ============================================
-Write-Host "[1/4] 读取版本号..." -ForegroundColor Yellow
+Write-Host "[1/5] 读取版本号..." -ForegroundColor Yellow
 
 $versionFile1 = Join-Path $devRoot "Custom.xaml.ini"
-$versionFile2 = Join-Path $toolDir "Custom.xaml.ini"
 
 if (-not (Test-Path $versionFile1)) {
     Write-Host "错误：找不到版本文件 Custom.xaml.ini" -ForegroundColor Red
     exit 1
 }
 
-$currentVersion = (Get-Content $versionFile1 -First 1).Trim()
-Write-Host "  当前版本: $currentVersion" -ForegroundColor Green
+# 从ini文件读取version=x.x.x
+$iniContent = Get-Content $versionFile1
+$versionLine = $iniContent | Where-Object { $_ -match '^version=(.+)$' } | Select-Object -First 1
+
+if (-not $versionLine) {
+    Write-Host "错误：Custom.xaml.ini 中未找到 version=x.x.x 配置" -ForegroundColor Red
+    Write-Host "请在第一行添加：version=1.0.2" -ForegroundColor Yellow
+    exit 1
+}
+
+$newVersion = $matches[1].Trim()
+Write-Host "  目标版本: $newVersion" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# 步骤 2: 扫描文件并计算大小
+# 步骤 2: 自动替换所有文件中的版本号
 # ============================================
-Write-Host "[2/4] 扫描文件并计算大小..." -ForegroundColor Yellow
+Write-Host "[2/5] 替换版本号..." -ForegroundColor Yellow
+
+$versionPattern = 'v\d+\.\d+\.\d+'
+$replacementPattern = "v$newVersion"
+
+$filesToUpdate = Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
+    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html'
+}
+
+$updatedCount = 0
+foreach ($file in $filesToUpdate) {
+    $content = Get-Content $file.FullName -Raw -Encoding UTF8
+    $originalContent = $content
+    
+    # 替换版本号（使用正则表达式）
+    $content = $content -replace $versionPattern, $replacementPattern
+    
+    if ($content -ne $originalContent) {
+        $content | Out-File -FilePath $file.FullName -Encoding UTF8 -NoNewline
+        $relativePath = $file.FullName.Replace($toolDir + '\', '')
+        Write-Host "  ✓ $relativePath" -ForegroundColor Gray
+        $updatedCount++
+    }
+}
+
+Write-Host "  已更新 $updatedCount 个文件" -ForegroundColor Green
+Write-Host ""
+
+# ============================================
+# 步骤 3: 扫描文件并计算大小
+# ============================================
+Write-Host "[3/5] 扫描文件并计算大小..." -ForegroundColor Yellow
 
 $fileList = @()
 Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
@@ -62,17 +104,18 @@ Write-Host "  共扫描到 $($fileList.Count) 个文件" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# 步骤 3: 更新版本文件
+# 步骤 4: 更新版本文件
 # ============================================
-Write-Host "[3/4] 更新版本文件..." -ForegroundColor Yellow
+Write-Host "[4/5] 更新版本文件..." -ForegroundColor Yellow
 
-# 生成版本文件内容
-$versionContent = @($currentVersion)
+# 生成版本文件内容（第一行是版本号）
+$versionContent = @($newVersion)
 foreach ($file in ($fileList | Sort-Object Path)) {
     $versionContent += "$($file.Path)=$($file.Size)"
 }
 
 # 写入两个版本文件
+$versionFile2 = Join-Path $toolDir "Custom.xaml.ini"
 $versionContent | Out-File -FilePath $versionFile1 -Encoding UTF8
 Write-Host "  已更新: Custom.xaml.ini" -ForegroundColor Green
 
@@ -81,9 +124,9 @@ Write-Host "  已更新: PCL Log Analyzer/Custom.xaml.ini" -ForegroundColor Gree
 Write-Host ""
 
 # ============================================
-# 步骤 4: 打包成 ZIP
+# 步骤 5: 打包成 ZIP
 # ============================================
-Write-Host "[4/4] 打包工具..." -ForegroundColor Yellow
+Write-Host "[5/5] 打包工具..." -ForegroundColor Yellow
 
 $zipPath = Join-Path $devRoot "PCL Log Analyzer.zip"
 
@@ -112,10 +155,9 @@ Write-Host "输出文件：" -ForegroundColor Cyan
 Write-Host "  - Custom.xaml.ini (已更新)" -ForegroundColor White
 Write-Host "  - PCL Log Analyzer.zip" -ForegroundColor White
 Write-Host ""
-Write-Host "版本: $currentVersion" -ForegroundColor Gray
+Write-Host "版本: $newVersion" -ForegroundColor Gray
 Write-Host "文件数: $($fileList.Count)" -ForegroundColor Gray
 Write-Host "ZIP大小: $zipSize KB" -ForegroundColor Gray
 Write-Host ""
 
 Start-Sleep -Seconds 3
-

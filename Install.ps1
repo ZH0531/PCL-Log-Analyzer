@@ -1,5 +1,6 @@
-# PCL Log Analyzer - One-Click Install/Update Script
-# Version: 1.0.2
+﻿# ============================================
+# PCL Log Analyzer - 一键安装/更新脚本
+# ============================================
 
 param(
     [string]$CDNUrl = "https://pcl.log.zh8888.top"
@@ -60,7 +61,14 @@ try {
     $ProgressPreference = 'SilentlyContinue'
     Invoke-WebRequest -Uri $versionUrl -OutFile $tempVersion -UseBasicParsing
     $versionContent = Get-Content $tempVersion
-    $remoteVersion = $versionContent[0].Trim()
+    
+    # Parse version (first line: version=x.x.x)
+    $versionLine = $versionContent[0].Trim()
+    if ($versionLine -match '^version=(.+)$') {
+        $remoteVersion = $matches[1]
+    } else {
+        throw "Invalid version file format. Expected: version=x.x.x"
+    }
     
     # Parse file sizes from version file
     $remoteFileSizes = @{}
@@ -84,11 +92,24 @@ $needsInstall = $true
 
 if (Test-Path $localVersionFile) {
     $localVersionContent = Get-Content $localVersionFile
-    $localVersion = $localVersionContent[0].Trim()
+    $localVersionLine = $localVersionContent[0].Trim()
+    
+    # Parse version (first line: version=x.x.x)
+    if ($localVersionLine -match '^version=(.+)$') {
+        $localVersion = $matches[1]
+    } else {
+        $localVersion = "Unknown"
+    }
+    
     Write-Host "  Local Version:  $localVersion" -ForegroundColor Cyan
     
     # Verify file integrity if version matches
-    if ($remoteVersion -and $localVersion -eq $remoteVersion) {
+    if (-not $remoteVersion) {
+        # Remote version unavailable, cannot verify
+        Write-Host "  ! Cannot verify version, skipping update check" -ForegroundColor Yellow
+        $needsInstall = $false
+    }
+    elseif ($localVersion -eq $remoteVersion) {
         Write-Host "  Checking file integrity..." -ForegroundColor Gray
         
         $allFilesOk = $true
@@ -145,6 +166,20 @@ if (Test-Path $localVersionFile) {
 }
 
 Write-Host ""
+
+# Skip download if not needed
+if (-not $needsInstall) {
+    Write-Host "=========================================" -ForegroundColor Yellow
+    Write-Host "  Installation Skipped" -ForegroundColor Yellow
+    Write-Host "=========================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Reason: Cannot connect to update server" -ForegroundColor Gray
+    Write-Host "Your local installation appears intact." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Window will close in 5 seconds..." -ForegroundColor Gray
+    Start-Sleep -Seconds 5
+    exit 0
+}
 
 # Prepare download
 $zipUrl = "$CDNUrl/PCL Log Analyzer.zip"
@@ -224,10 +259,14 @@ Write-Host "[6/7] Verifying Installation..." -ForegroundColor Yellow
 
 $requiredFiles = @(
     "Scripts\AnalyzeLogs.ps1",
+    "Scripts\LogParser.ps1",
+    "Scripts\ReportGenerator.ps1",
+    "Scripts\GenerateReportsList.ps1",
     "Scripts\SelectLog.ps1",
     "Scripts\ClearReports.ps1",
     "Scripts\ErrorRules.ps1",
     "Templates\report-template.html",
+    "Templates\reports-list-template.html",
     "Custom.xaml.ini"
 )
 

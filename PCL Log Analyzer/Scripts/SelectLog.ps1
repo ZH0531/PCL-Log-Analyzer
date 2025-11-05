@@ -1,5 +1,6 @@
-﻿# PCL Log Analyzer - Manual File Selection
-# Use Windows file dialog to select log file
+﻿# ============================================
+# PCL Log Analyzer - 手动选择日志文件
+# ============================================
 
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

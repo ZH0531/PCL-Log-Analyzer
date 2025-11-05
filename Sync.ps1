@@ -1,5 +1,7 @@
-﻿# PCL Log Analyzer - 同步脚本
+﻿# ============================================
+# PCL Log Analyzer - 同步脚本
 # 功能：将开发目录同步到用户目录，便于调试
+# ============================================
 
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<title>历史报告列表 - PCL Log Analyzer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',sans-serif;background:#fafafa;line-height:1.6;height:100vh;overflow:hidden}
+.container{display:flex;height:100vh;gap:0}
+.sidebar{width:220px;background:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:20px;border-right:1px solid #f0f0f0}
+.logo-area{text-align:center;padding-bottom:16px;border-bottom:1px solid #f5f5f5}
+.logo-icon{font-size:36px;margin-bottom:8px}
+.logo-title{font-size:16px;font-weight:600;color:#374151;margin-bottom:4px}
+.logo-subtitle{font-size:11px;color:#9ca3af;line-height:1.4}
+.stats-area{display:flex;flex-direction:column;gap:12px;flex:1}
+.stat-card{background:#fafafa;border-radius:8px;padding:16px 12px;text-align:center;border:1px solid #f0f0f0}
+.stat-value{font-size:26px;font-weight:700;color:#3b82f6;margin-bottom:4px;font-family:'Segoe UI',sans-serif}
+.stat-label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.3px}
+.footer-info{text-align:center;padding-top:16px;border-top:1px solid #f5f5f5;margin-top:auto}
+.footer-info p{font-size:11px;color:#9ca3af;margin-bottom:6px}
+.footer-link{color:#3b82f6;text-decoration:none;font-size:11px}
+.footer-link:hover{color:#2563eb}
+.main-area{flex:1;display:flex;flex-direction:column;background:#fafafa}
+.toolbar{background:#fff;padding:16px 24px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.search-wrapper{flex:1;min-width:240px;position:relative}
+.search-input{width:100%;padding:8px 12px 8px 36px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;background:#fafafa;color:#374151}
+.search-input:focus{outline:none;border-color:#3b82f6;background:#fff}
+.search-input::placeholder{color:#9ca3af}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:14px}
+.controls-group{display:flex;align-items:center;gap:8px}
+.control-label{font-size:12px;color:#6b7280;padding:0 4px}
+.control-btn{padding:6px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;font-size:12px;cursor:pointer;color:#4b5563;transition:all 0.15s}
+.control-btn:hover{border-color:#3b82f6;color:#3b82f6}
+.control-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.control-btn.active.status-crash{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.control-btn.active.status-issue{background:#fffbeb;color:#d97706;border-color:#fef3c7}
+.control-btn.active.status-normal{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+.divider{width:1px;height:20px;background:#e5e7eb}
+.list-section{flex:1;overflow-y:auto;padding:20px 24px}
+.list-header{font-size:13px;color:#6b7280;margin-bottom:12px;display:flex;justify-content:space-between;padding:0 4px}
+.reports-container{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.report-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:8px;cursor:pointer;border:1px solid #f0f0f0;transition:all 0.15s}
+.report-item:hover{border-color:#3b82f6;box-shadow:0 2px 8px rgba(59,130,246,0.08)}
+.report-item.latest{background:#f0f9ff;border-color:#bfdbfe}
+.report-item.hidden{display:none}
+.report-number{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;color:#6b7280;border-radius:6px;font-size:13px;font-weight:700;flex-shrink:0;border:1px solid #e5e7eb}
+.report-item.latest .report-number{background:#dbeafe;color:#3b82f6;border-color:#bfdbfe}
+.report-info{flex:1;min-width:0}
+.report-name{font-size:14px;font-weight:600;color:#1f2937;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.report-name-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.badge{display:inline-flex;padding:3px 8px;background:#3b82f6;color:#fff;border-radius:4px;font-size:10px;font-weight:600;flex-shrink:0}
+.status-badge{display:inline-flex;padding:3px 8px;color:#fff;border-radius:4px;font-size:10px;font-weight:600;flex-shrink:0}
+.report-meta{font-size:11px;color:#6b7280;display:flex;gap:14px;flex-wrap:wrap}
+.report-meta span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.empty-state{text-align:center;padding:60px 20px;color:#9ca3af}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:0.4}
+.no-results{text-align:center;padding:40px 20px;color:#9ca3af;background:#fff;border-radius:8px;border:1px solid #f0f0f0;grid-column:1/-1}
+.no-results-icon{font-size:42px;margin-bottom:10px;opacity:0.5}
+.no-results p{font-size:13px;color:#6b7280}
+@media(max-width:1024px){
+.container{flex-direction:column}
+.sidebar{width:100%;border-right:none;border-bottom:1px solid #f0f0f0;padding:16px}
+.logo-area{padding-bottom:12px}
+.stats-area{flex-direction:row}
+.footer-info{display:none}
+.toolbar{padding:12px 16px}
+.list-section{padding:16px}
+.reports-container{grid-template-columns:1fr}
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#fafafa}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+</style>
+</head>
+<body>
+<div class='container'>
+<div class='sidebar'>
+<div class='logo-area'>
+<div class='logo-icon'>📋</div>
+<div class='logo-title'>历史报告</div>
+<div class='logo-subtitle'>{{GENERATE_TIME}}</div>
+</div>
+<div class='stats-area'>
+<div class='stat-card'>
+<div class='stat-value' id='display-count'>{{TOTAL_COUNT}}</div>
+<div class='stat-label'>显示数量</div>
+</div>
+<div class='stat-card'>
+<div class='stat-value'>{{TOTAL_SIZE}}</div>
+<div class='stat-label'>总大小</div>
+</div>
+<div class='stat-card'>
+<div class='stat-value' style='color:#ff6b6b'>{{CRASH_COUNT}}</div>
+<div class='stat-label'>崩溃次数</div>
+</div>
+</div>
+<div class='footer-info'>
+<p>PCL Log Analyzer v1.1.0</p>
+<a href='https://github.com/ZH0531/PCL-Log-Analyzer' target='_blank' class='footer-link'>GitHub</a>
+<span style='color:#d1d5db;margin:0 4px'>·</span>
+<a href='https://github.com/ZH0531/PCL-Log-Analyzer/issues' target='_blank' class='footer-link'>反馈</a>
+</div>
+</div>
+
+<div class='main-area'>
+<div class='toolbar'>
+<div class='search-wrapper'>
+<span class='search-icon'>🔍</span>
+<input type='text' class='search-input' id='search-input' placeholder='搜索报告...'>
+</div>
+<div class='controls-group'>
+<span class='control-label'>排序</span>
+<button class='control-btn active' onclick='sortReports("time")'>时间</button>
+<button class='control-btn' onclick='sortReports("size")'>大小</button>
+</div>
+<div class='divider'></div>
+<div class='controls-group'>
+<span class='control-label'>状态</span>
+<button class='control-btn' onclick='filterByStatus("all")'>全部</button>
+<button class='control-btn status-crash' onclick='filterByStatus("游戏崩溃")'>崩溃</button>
+<button class='control-btn status-issue' onclick='filterByStatus("发现问题")'>问题</button>
+<button class='control-btn status-normal' onclick='filterByStatus("运行正常")'>正常</button>
+</div>
+</div>
+
+<div class='list-section'>
+<div class='list-header'>
+<span id='result-text'>共 {{TOTAL_COUNT}} 份报告</span>
+<span id='sort-info'>按时间倒序</span>
+</div>
+<div class='reports-container' id='reports-container'>
+{{REPORTS_HTML}}
+<div id='no-results' class='no-results' style='display:none'>
+<div class='no-results-icon'>🔍</div>
+<p>未找到匹配的报告</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let allReports = [];
+let currentSort = 'time';
+let currentFilter = 'all';
+
+function initReports() {
+    const items = document.querySelectorAll('.report-item');
+    allReports = Array.from(items).map(item => ({
+        element: item,
+        filename: item.getAttribute('data-filename'),
+        time: item.getAttribute('data-time'),
+        timestamp: parseInt(item.getAttribute('data-timestamp')),
+        size: parseFloat(item.getAttribute('data-size')),
+        status: item.getAttribute('data-status'),
+        searchText: item.getAttribute('data-search')
+    }));
+}
+
+function searchReports() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    let visibleCount = 0;
+    
+    allReports.forEach(report => {
+        const matches = report.searchText.toLowerCase().includes(query);
+        const filterMatch = currentFilter === 'all' || report.status === currentFilter;
+        
+        if (matches && filterMatch) {
+            report.element.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            report.element.classList.add('hidden');
+        }
+    });
+    
+    updateDisplayCount(visibleCount);
+    updateResultText(visibleCount);
+    updateNoResults(visibleCount);
+    reindexNumbers();
+}
+
+function filterByStatus(status) {
+    currentFilter = status;
+    
+    // 更新状态按钮
+    const allButtons = document.querySelectorAll('.control-btn');
+    allButtons.forEach(btn => {
+        const text = btn.textContent;
+        const isMatch = (status === 'all' && text === '全部') ||
+                       (status === '游戏崩溃' && text === '崩溃') ||
+                       (status === '发现问题' && text === '问题') ||
+                       (status === '运行正常' && text === '正常');
+        
+        if (isMatch) {
+            btn.classList.add('active');
+        } else if (text === '全部' || text === '崩溃' || text === '问题' || text === '正常') {
+            btn.classList.remove('active');
+        }
+    });
+    
+    searchReports();
+}
+
+function sortReports(type) {
+    currentSort = type;
+    const container = document.getElementById('reports-container');
+    
+    // 更新排序按钮状态
+    const allButtons = document.querySelectorAll('.control-btn');
+    allButtons.forEach(btn => {
+        const text = btn.textContent;
+        if ((text === '时间' && type === 'time') || (text === '大小' && type === 'size')) {
+            btn.classList.add('active');
+        } else if (text === '时间' || text === '大小') {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // 排序
+    if (type === 'time') {
+        allReports.sort((a, b) => b.timestamp - a.timestamp);
+        document.getElementById('sort-info').textContent = '按时间倒序';
+    } else if (type === 'size') {
+        allReports.sort((a, b) => b.size - a.size);
+        document.getElementById('sort-info').textContent = '按大小降序';
+    }
+    
+    // 重新排列DOM
+    allReports.forEach(report => {
+        container.appendChild(report.element);
+    });
+    
+    reindexNumbers();
+}
+
+function reindexNumbers() {
+    let index = 1;
+    allReports.forEach(report => {
+        if (!report.element.classList.contains('hidden')) {
+            report.element.querySelector('.report-number').textContent = index++;
+        }
+    });
+}
+
+function updateDisplayCount(count) {
+    document.getElementById('display-count').textContent = count;
+}
+
+function updateResultText(count) {
+    const total = allReports.length;
+    const text = count === total ? `共 ${total} 份报告` : `显示 ${count} / ${total}`;
+    document.getElementById('result-text').textContent = text;
+}
+
+function updateNoResults(count) {
+    const noResults = document.getElementById('no-results');
+    
+    if (count === 0) {
+        noResults.style.display = 'block';
+    } else {
+        noResults.style.display = 'none';
+    }
+}
+
+function openReport(filename) {
+    window.location.href = filename;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initReports();
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', searchReports);
+});
+</script>
+</body>
+</html>

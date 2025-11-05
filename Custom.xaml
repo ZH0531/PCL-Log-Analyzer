@@ -50,20 +50,22 @@
             <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="35"
                 Text="📁 历史报告" 
                 EventType="打开文件" 
-                EventData="explorer.exe|{path}PCL\PCL Log Analyzer\Reports"
-                ToolTip="查看所有历史分析报告"/>
+                EventData="PCL Log Analyzer/Reports/reports-list.html"
+                ToolTip="查看所有历史分析报告（每次分析后自动更新）"/>
         </Grid>
         
     </StackPanel>
 </local:MyCard>
 
 <!-- 版本更新通知（可折叠） -->
-<local:MyCard Title="工具已更新至 V1.0.2 - 请手动点击更新（若已更新请忽略）" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
+<local:MyCard Title="🎉 工具已更新至 V1.1.0 - 请手动点击更新（若已更新请忽略）" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
     <StackPanel Margin="25,25,23,15">
         <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#666666"
-            Text=" V1.0.2 更新内容："/>
+            Text=" V1.1.0 重大更新："/>
         <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
-            Text="• 新增 Fabric/Forge Mod加载器不匹配检测&#xA;• 新增 手动调试崩溃识别（F3+C）&#xA;• 优化 错误识别规则配置系统&#xA;• 修复 关键日志截断问题&#xA;• 修复 单个错误时显示异常问题"/>
+            Text="✨ 新增 历史报告列表页（支持搜索、筛选、排序）&#xA;✨ 新增 双列网格布局，更美观易用&#xA;🔧 优化 代码模块化架构，性能提升&#xA;🔧 优化 安全更新机制（失败自动回滚）&#xA;🐛 修复 报告生成和显示问题"/>
+        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0" FontSize="12" Foreground="#999999" FontStyle="Italic"
+            Text="💡 现在可通过【📁 历史报告】按钮查看所有历史分析记录！"/>
         <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#e67e22" FontWeight="Bold"
             Text="💡 首次使用？"/>
         <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
