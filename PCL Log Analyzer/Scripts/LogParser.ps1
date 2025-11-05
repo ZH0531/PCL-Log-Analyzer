@@ -4,7 +4,7 @@
 
 param(
     [string]$LogPath,
-    [string]$ScriptRoot
+    [string]$ScriptRoot = $PSScriptRoot
 )
 
 # 加载错误规则
@@ -77,7 +77,12 @@ foreach ($line in $logContent) {
     }
     
     # Java Version
-    if ($line -match 'JVM identified as (.+?) (\d+\.\d+\.\d+[^\s]*)') { 
+    if ($line -match 'Java Version:\s*([\d\.]+),\s*(.+?)\s*$') {
+        # 匹配 "Java Version: 25.0.1, Oracle Corporation"
+        $analysis.JavaVersion = $matches[1]
+        $analysis.JvmVendor = $matches[2].Trim()
+    }
+    elseif ($line -match 'JVM identified as (.+?) (\d+\.\d+\.\d+[^\s]*)') { 
         $analysis.JvmVendor = $matches[1]
         $analysis.JavaVersion = $matches[2]
     }
@@ -108,7 +113,11 @@ foreach ($line in $logContent) {
     }
     
     # OS Info
-    if ($line -match 'OS[:\s]+(.+?) arch (.+?) version (.+)') {
+    if ($line -match 'Operating System:\s*(.+?)\s+\(amd64\)\s+version\s+([\d\.]+)') {
+        # 匹配 "Operating System: Windows 11 (amd64) version 10.0"
+        $analysis.OS = "$($matches[1]) (version $($matches[2]))"
+    }
+    elseif ($line -match 'OS[:\s]+(.+?) arch (.+?) version (.+)') {
         $analysis.OS = "$($matches[1]) $($matches[3]) ($($matches[2]))"
     }
     elseif ($line -match 'OS[:\s]+(.+?) \(([\d\.]+)\)') {
@@ -119,13 +128,44 @@ foreach ($line in $logContent) {
     if ($line -match 'CPU[:\s]+(\d+)x (.+?)$') {
         $analysis.CPU = "$($matches[1])x $($matches[2])"
     }
+    elseif ($line -match 'Processor Name:\s*(.+?)\s*$') {
+        # 从崩溃报告的 System Details 中提取 CPU 名称
+        if ($analysis.CPU -eq "Unknown") {
+            $analysis.CPU = $matches[1].Trim()
+        }
+    }
+    elseif ($line -match 'CPUs:\s*(\d+)') {
+        # 从 "CPUs: 20" 提取核心数，但只有在已经有 CPU 名称时才添加
+        if ($analysis.CPU -ne "Unknown" -and $analysis.CPU -notmatch '^\d+x') {
+            $cpuCount = $matches[1]
+            $analysis.CPU = "$cpuCount x $($analysis.CPU)"
+        }
+    }
+    # 注意：arch amd64/x86 只是架构类型，不是真正的CPU型号，不提取
     
     # GPU Info
-    if ($line -match 'GL Caps: (.+?)\s') {
-        $analysis.GPU = $matches[1]
+    if ($line -match 'GL info:\s*(.+?)/(?:PCIe|SSE2)') {
+        # 匹配 "GL info: NVIDIA GeForce RTX 5060 Laptop GPU/PCIe/SSE2"
+        $analysis.GPU = $matches[1].Trim()
+    }
+    elseif ($line -match 'Backend API:\s*(.+?)/(?:PCIe|SSE2)') {
+        # 匹配 "Backend API: NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2"
+        $analysis.GPU = $matches[1].Trim()
+    }
+    elseif ($line -match 'Graphics card #0 name:\s*(.+?)\s*$') {
+        # 从崩溃报告的 System Details 中提取主显卡名称
+        if ($analysis.GPU -eq "Unknown") {
+            $analysis.GPU = $matches[1].Trim()
+        }
+    }
+    elseif ($line -match 'GL_RENDERER\s*:\s*(.+?)\s*$') {
+        $analysis.GPU = $matches[1].Trim()
     }
     elseif ($line -match 'OpenGL Vendor:\s*(.+?)\s*$') {
-        $analysis.GPU = $matches[1]
+        $analysis.GPU = $matches[1].Trim()
+    }
+    elseif ($line -match 'GPU:\s*(.+?)\s*$') {
+        $analysis.GPU = $matches[1].Trim()
     }
     
     # OpenGL Version
@@ -183,7 +223,19 @@ foreach ($line in $logContent) {
                 $existingError.Count++
                 
                 if ($rule.CollectDetails -and $matches[1]) {
-                    $detail = $matches[1].Trim()
+                    # 组合多个捕获组形成详细信息
+                    if ($matches.Count -gt 3) {
+                        # 格式: Mod名 → 依赖 版本+
+                        $detail = "$($matches[1]) → $($matches[2]) $($matches[3])+"
+                    }
+                    elseif ($matches.Count -gt 2) {
+                        # 格式: Mod名 → 依赖
+                        $detail = "$($matches[1]) → $($matches[2])"
+                    }
+                    else {
+                        $detail = $matches[1].Trim()
+                    }
+                    
                     if ($existingError.Details -notcontains $detail) {
                         $existingError.Details += $detail
                     }
@@ -200,7 +252,19 @@ foreach ($line in $logContent) {
                 }
                 
                 if ($rule.CollectDetails -and $matches[1]) {
-                    $newError.Details += $matches[1].Trim()
+                    # 组合多个捕获组形成详细信息
+                    if ($matches.Count -gt 3) {
+                        # 格式: Mod名 → 依赖 版本+
+                        $detail = "$($matches[1]) → $($matches[2]) $($matches[3])+"
+                    }
+                    elseif ($matches.Count -gt 2) {
+                        # 格式: Mod名 → 依赖
+                        $detail = "$($matches[1]) → $($matches[2])"
+                    }
+                    else {
+                        $detail = $matches[1].Trim()
+                    }
+                    $newError.Details += $detail
                 }
                 
                 $analysis.Errors += $newError

@@ -30,14 +30,15 @@ function Get-ErrorTypes {
         @{ Pattern = '/WARN\].*Found \d+ non-fabric mods'; Type = 'Fabric环境安装了Forge Mod'; Severity = '严重'; Priority = 1; CollectDetails = $true },
         @{ Pattern = '/WARN\].*Found \d+ non-forge mods'; Type = 'Forge环境安装了Fabric Mod'; Severity = '严重'; Priority = 1; CollectDetails = $true },
         @{ Pattern = '/ERROR\].*Incompatible mods found'; Type = 'Mod与MC版本不兼容'; Severity = '严重'; Priority = 2; CollectDetails = $true },
-        @{ Pattern = '/ERROR\].*Missing.*dependencies|/ERROR\].*unsupported mandatory'; Type = 'Mod依赖缺失'; Severity = '严重'; Priority = 3; CollectDetails = $true },
-        @{ Pattern = '/FATAL\].*requires .+ or above|/ERROR\].*requires .+ or above'; Type = 'Mod版本不匹配'; Severity = '严重'; Priority = 4; CollectDetails = $true },
+        @{ Pattern = 'Mod (\S+) requires (neoforge|forge|minecraft) ([\d\.]+)'; Type = 'Mod版本不匹配'; Severity = '严重'; Priority = 3; CollectDetails = $true },
+        @{ Pattern = 'Mod (\S+) requires (\S+) ([\d\.]+)'; Type = 'Mod依赖缺失'; Severity = '严重'; Priority = 4; CollectDetails = $true },
         @{ Pattern = '/ERROR\].*ModResolutionException'; Type = 'Mod依赖问题'; Severity = '严重'; Priority = 5 },
         @{ Pattern = '/ERROR\].*Failed to parse.*(config|json|data)|/ERROR\].*(Not a string|Not a json array)|MalformedJsonException'; Type = '配置文件格式错误'; Severity = '中等'; Priority = 6 },
         
         # ===== 直接错误（导致崩溃的具体问题） =====
-        @{ Pattern = '/FATAL\].*Error during.*loading|/ERROR\].*Failed to create mod instance'; Type = 'Mod加载失败'; Severity = '严重'; Priority = 10; CollectDetails = $true },
-        @{ Pattern = '/ERROR\].*(Caught exception during event FMLClientSetupEvent|Exception caught during firing event)'; Type = 'Mod初始化失败'; Severity = '严重'; Priority = 11; CollectDetails = $true },
+        @{ Pattern = 'Failed to create mod instance\. ModID: (\S+)'; Type = 'Mod加载失败'; Severity = '严重'; Priority = 10; CollectDetails = $true },
+        @{ Pattern = '/FATAL\].*Error during.*loading|/ERROR\].*Failed to create mod instance'; Type = 'Mod加载失败'; Severity = '严重'; Priority = 10; CollectDetails = $false },
+        @{ Pattern = '/ERROR\].*(Caught exception during event FMLClientSetupEvent|Exception caught during firing event)'; Type = 'Mod初始化失败'; Severity = '严重'; Priority = 11; CollectDetails = $false },
         @{ Pattern = '/ERROR\].*ClassCastException|Caused by.*ClassCastException'; Type = 'Mod兼容性问题'; Severity = '严重'; Priority = 12 },
         @{ Pattern = '/ERROR\].*MixinApplyError|/ERROR\].*Mixin.*failed'; Type = 'Mixin冲突'; Severity = '严重'; Priority = 13 },
         @{ Pattern = '/ERROR\].*(Unbound values in registry|Registry loading errors)'; Type = 'Mod注册冲突'; Severity = '严重'; Priority = 14 },
@@ -62,6 +63,7 @@ function Get-ErrorTypes {
         @{ Pattern = '/ERROR\].*was null.*due to some mod not registering'; Type = '资源注册缺失'; Severity = '中等'; Priority = 42; CollectDetails = $true },
         @{ Pattern = '/ERROR\].*Unable to parse animation'; Type = '动画解析失败'; Severity = '轻微'; Priority = 43 },
         @{ Pattern = '/ERROR\].*Failed to load.*information'; Type = '网络资源加载失败'; Severity = '轻微'; Priority = 44 },
+        @{ Pattern = '/ERROR\].*Read timed out|io exception while checking versions'; Type = '网络超时'; Severity = '轻微'; Priority = 44 },
         @{ Pattern = '/ERROR\].*Failed to retrieve profile key pair'; Type = '密钥对获取失败'; Severity = '轻微'; Priority = 45 },
         @{ Pattern = '/ERROR\].*Mod mixin into Embeddium'; Type = 'Embeddium兼容性警告'; Severity = '轻微'; Priority = 46 },
         @{ Pattern = '/ERROR\].*Access transformer file.*does not exist'; Type = 'AT文件缺失'; Severity = '轻微'; Priority = 47 },
@@ -149,6 +151,9 @@ function Get-ErrorSuggestion {
         }
         '身份验证失败' { 
             return @{ Title = 'Auth'; Text = '登录验证问题：Microsoft账号验证失败（401错误），在PCL设置中重新登录账号，或检查网络连接' }
+        }
+        '网络超时' { 
+            return @{ Title = 'Timeout'; Text = '网络超时：某些Mod检查更新或下载资源时网络连接超时，可以忽略，不影响游戏运行。如经常出现，检查网络连接或配置代理' }
         }
         '密钥对获取失败' { 
             return @{ Title = 'Key'; Text = '密钥获取失败：无法获取账号密钥对，通常不影响游戏，可以忽略。如影响联机，请检查网络或重新登录' }

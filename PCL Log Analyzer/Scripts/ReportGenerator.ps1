@@ -7,8 +7,11 @@ param(
     [string]$LogFileName,
     [string]$TemplateDir,
     [string]$OutputPath,
-    [scriptblock]$GetSuggestionFunc
+    [string]$ScriptRoot = $PSScriptRoot
 )
+
+# 加载错误规则（用于获取建议）
+. (Join-Path $ScriptRoot "ErrorRules.ps1")
 
 # ============================================
 # 1. 排序错误并生成建议
@@ -21,7 +24,7 @@ $displayErrorCount = $sortedErrors.Count
 
 $suggestions = @()
 foreach ($err in $sortedErrors) {
-    $suggestion = & $GetSuggestionFunc -ErrorType $err.Type
+    $suggestion = Get-ErrorSuggestion -ErrorType $err.Type
     if ($suggestion -and !($suggestions | Where-Object {$_.Title -eq $suggestion.Title})) {
         $suggestions += $suggestion
     }
@@ -53,9 +56,6 @@ $(if ($Analysis.CrashReport) { "<div class='info-item' style='grid-column:1/-1;b
 # ============================================
 # 3. 序列化错误为JSON
 # ============================================
-# 需要收集Details的错误类型
-$collectDetailsTypes = @("Mod不兼容", "Mod依赖缺失", "Mod版本不匹配", "Incompatible mods found!")
-
 $errorsJsonData = @($sortedErrors | ForEach-Object {
     # 清理Content中的乱码字符
     $cleanContent = if ($_.Content) {
@@ -69,7 +69,8 @@ $errorsJsonData = @($sortedErrors | ForEach-Object {
         Count = $_.Count
         Details = $_.Details
         Priority = $_.Priority
-        IsCollectDetails = ($collectDetailsTypes -contains $_.Type)
+        # 只要Details数组不为空，就显示详情
+        IsCollectDetails = ($_.Details.Count -gt 0)
     }
 })
 

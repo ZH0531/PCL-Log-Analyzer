@@ -69,7 +69,7 @@ PCL Log Analyzer Dev/
 
 ## 🚀 使用方法
 
-### 一键安装（推荐）
+### PCL一键安装（推荐）
 
 1. 打开 **PCL 启动器**
 2. **设置** → **个性化** → **主页**→ **联网更新**
@@ -341,7 +341,7 @@ function Get-ErrorSuggestion {
         
         '新错误类型' { 
             return @{ 
-                Title = 'YourID';                                        # 建议标识（简短唯一）
+                Title = 'YourID';  # 建议标识（简短唯一）
                 Text = '问题描述和解决方法：①第一步 ②第二步 ③第三步'  # 建议内容
             }
         }

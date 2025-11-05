@@ -14,6 +14,19 @@ try {
 
 $ErrorActionPreference = "Continue"
 
+# ============================================
+# 显示处理进度（轻量级，无性能损耗）
+# ============================================
+function Show-Processing {
+    param([string]$Message)
+    Write-Host "    $Message" -ForegroundColor Cyan
+}
+
+function Show-Complete {
+    param([string]$Message)
+    Write-Host "  ✓ $Message" -ForegroundColor Green
+}
+
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  PCL 日志分析工具 v1.1.0" -ForegroundColor Cyan
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
@@ -146,10 +159,14 @@ if (!$logFileName) {
 }
     
 Write-Host "[步骤 3/5] 分析日志..." -ForegroundColor Yellow
+Show-Processing "正在解析日志文件..."
 
 # 调用日志解析模块
 $logParserScript = Join-Path $scriptRoot "LogParser.ps1"
 $analysis = & $logParserScript -LogPath $logPath -ScriptRoot $scriptRoot
+
+Show-Complete "日志解析完成"
+Write-Host ""
 
 # 如果日志中没有找到内存信息和Java版本，尝试从bat文件提取
 if ($analysis.JavaVersion -eq "Unknown") { $analysis.JavaVersion = $javaFromBat }
@@ -212,6 +229,7 @@ if ($analysis.GameStatus -eq 'Normal Exit' -and $analysis.Errors.Count -eq 0) {
 Write-Host ""
 
 Write-Host "[步骤 4/5] 生成报告..." -ForegroundColor Yellow
+Show-Processing "正在生成 HTML 报告..."
 
 # 准备报告文件路径
 $timePrefix = Get-Date -Format 'yyMMdd-HHmmss'
@@ -229,26 +247,32 @@ $reportResult = & $reportGeneratorScript `
     -LogFileName $logFileName `
     -TemplateDir $templateDir `
     -OutputPath $reportPath `
-    -GetSuggestionFunc ${function:Get-ErrorSuggestion}
+    -ScriptRoot $scriptRoot
 
 # 复制为latest.html
 Copy-Item $reportPath (Join-Path $reportsDir "latest.html") -Force
+
+Show-Complete "报告生成完成"
+Write-Host ""
 
 Write-Host "  报告: $reportFile" -ForegroundColor Green
 Write-Host "  状态: $($reportResult.StatusText)" -ForegroundColor $(if ($reportResult.StatusText -eq '游戏崩溃') {'Red'} elseif ($reportResult.StatusText -eq '发现问题') {'Yellow'} else {'Green'})
 Write-Host "  错误: $($reportResult.ErrorCount) 个" -ForegroundColor $(if ($reportResult.ErrorCount -gt 0) {'Red'} else {'Green'})
 Write-Host "  建议: $($reportResult.SuggestionCount) 条" -ForegroundColor Cyan
-Write-Host ""
-
+    Write-Host ""
+    
 Write-Host "[步骤 5/5] 生成历史报告列表..." -ForegroundColor Yellow
+Show-Processing "正在更新历史报告索引..."
 
 # 调用历史报告列表生成模块
 $generateListScript = Join-Path $scriptRoot "GenerateReportsList.ps1"
 $templateDir = Join-Path $toolRoot "Templates"
 & $generateListScript -ReportsDir $reportsDir -TemplateDir $templateDir
 
+Show-Complete "历史报告列表已更新"
+
 Write-Host ""
-Write-Host "分析完成！正在打开报告..." -ForegroundColor Green
+Write-Host "✓ 分析完成！正在打开报告..." -ForegroundColor Green
 Start-Process $reportPath
     
     Write-Host ""
