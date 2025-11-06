@@ -166,16 +166,17 @@ PCL Log Analyzer Dev/
 **Custom.xaml.ini** 格式：
 
 ```ini
-version=1.0.2
-Scripts/AnalyzeLogs.ps1=8456
-Scripts/LogParser.ps1=15234
-Scripts/ReportGenerator.ps1=9876
-Scripts/GenerateReportsList.ps1=8192
-Scripts/ErrorRules.ps1=14559
-Scripts/SelectLog.ps1=2841
-Scripts/ClearReports.ps1=2967
-Templates/report-template.html=19601
-Templates/reports-list-template.html=15000
+version=1.2.0
+Rules/README.md=4687
+Rules/Rules.json=23246
+Scripts/AnalyzeLogs.ps1=12505
+Scripts/ClearReports.ps1=3075
+Scripts/GenerateReportsList.ps1=6149
+Scripts/LogParser.ps1=40890
+Scripts/ReportGenerator.ps1=12323
+Scripts/SelectLog.ps1=2893
+Templates/report-template.html=24177
+Templates/reports-list-template.html=11793
 ```
 
 **说明**：
@@ -292,7 +293,7 @@ AnalyzeLogs.ps1 启动
 欢迎提交 Pull Request 改进工具！
 
 **可以贡献的方向**：
-- 📝 **添加新的错误规则**（`ErrorRules.ps1`）
+- 📝 **添加新的错误规则**（`Rules/Rules.json`）
 - 🎨 **改进 HTML 样式**（`Templates/*.html`）
 - 🐛 **修复 Bug 或优化性能**
 - 🌐 **多语言支持**
@@ -306,6 +307,7 @@ AnalyzeLogs.ps1 启动
 5. 提交 Pull Request
 
 **代码规范**：
+- ✅ JSON 文件使用 **UTF-8** 编码
 - ✅ PowerShell 脚本使用 **UTF-8 with BOM** 编码（兼容低版本）
 - ✅ 添加清晰的注释说明
 - ✅ 遵循现有代码风格
@@ -313,60 +315,46 @@ AnalyzeLogs.ps1 启动
 
 **添加新错误规则示例**：
 
-在 `ErrorRules.ps1` 中：
+在 `Rules/Rules.json` 中的 `errors` 数组添加新规则：
 
-**步骤1：在 `Get-ErrorTypes` 函数中添加错误规则**
-```powershell
-function Get-ErrorTypes {
-    return @(
-        # ... 其他规则 ...
-        
-        # 你的新规则（哈希表内用分号，数组元素末尾用逗号）
-        @{ 
-            Pattern = '/ERROR\].*你的正则表达式';  # 正则匹配模式
-            Type = '新错误类型';                   # 错误类型名称
-            Severity = '严重';                     # 严重/中等/轻微
-            Priority = 25;                         # 优先级（数字越小越优先）
-            CollectDetails = $true                 # 最后一个属性不需要分号
-        },
-        
-        # 最后一个规则可以不加逗号
-        @{ Pattern = '/ERROR\]'; Type = '未分类错误'; Severity = '中等'; Priority = 50 }
-    )
+**简单规则示例**（无 causedBy）：
+```json
+{
+  "id": "java_version_low",
+  "name": "Java版本过低",
+  "pattern": "/ERROR\\].*UnsupportedClassVersionError",
+  "severity": "严重",
+  "priority": 17,
+  "suggestion": "Java版本过低：当前Java版本不支持该Mod。在PCL设置中切换到Java 17或更高版本"
 }
 ```
 
-**步骤2：在 `Get-ErrorSuggestion` 函数中添加解决建议**
-```powershell
-function Get-ErrorSuggestion {
-    param([string]$ErrorType)
-    
-    switch ($ErrorType) {
-        # ... 其他建议 ...
-        
-        '新错误类型' { 
-            return @{ 
-                Title = 'YourID';  # 建议标识（简短唯一）
-                Text = '新错误类型：简短描述问题原因。说明解决方案，控制在2-3句话内'  # 建议内容
-            }
-        }
+**复杂规则示例**（带 causedBy）：
+```json
+{
+  "id": "custom_error",
+  "name": "自定义错误类型",
+  "pattern": "/ERROR\\].*你的正则表达式",
+  "severity": "严重",
+  "priority": 25,
+  "collectDetails": true,
+  "suggestion": "主错误的解决建议",
+  "causedBy": [
+    {
+      "pattern": "原因1的正则表达式",
+      "reason": "原因1名称",
+      "suggestion": "针对原因1的具体建议"
+    },
+    {
+      "pattern": "原因2的正则表达式",
+      "reason": "原因2名称",
+      "suggestion": "针对原因2的具体建议"
     }
+  ]
 }
 ```
 
-**完整示例（添加Java版本检测）**：
-```powershell
-# 在 Get-ErrorTypes 中添加（哈希表内用分号，数组元素末尾用逗号）：
-@{ Pattern = '/ERROR\].*UnsupportedClassVersionError'; Type = 'Java版本过低'; Severity = '严重'; Priority = 17 },
-
-# 在 Get-ErrorSuggestion 中添加：
-'Java版本过低' { 
-    return @{ 
-        Title = 'Java'; 
-        Text = 'Java版本过低：当前Java版本不支持该Mod。在PCL设置中切换到Java 17或更高版本' 
-    }
-}
-```
+> **📖 详细说明**：查看 [`Rules/README.md`](./PCL%20Log%20Analyzer/Rules/README.md) 了解完整规则编写指南
 
 ---
 

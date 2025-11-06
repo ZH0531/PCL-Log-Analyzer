@@ -60,13 +60,17 @@ Write-Host "[2/5] 替换版本号和日期..." -ForegroundColor Yellow
 
 $versionPattern1 = 'v\d+\.\d+\.\d+'           # 匹配 v1.0.2
 $versionPattern2 = '版本：\d+\.\d+\.\d+'        # 匹配 版本：1.0.2
-$datePattern = '更新日期：\d{4}-\d{2}-\d{2}'   # 匹配 更新日期：2025-11-04
+$versionPattern3 = '\*\*版本\*\*:\s*\d+\.\d+\.\d+' # 匹配 **版本**: 1.0.0
+$datePattern1 = '更新日期：\d{4}-\d{2}-\d{2}'   # 匹配 更新日期：2025-11-04
+$datePattern2 = '\*\*最后更新\*\*:\s*\d{4}-\d{2}-\d{2}' # 匹配 **最后更新**: 2025-01-31
 $replacementPattern1 = "v$newVersion"
 $replacementPattern2 = "版本：$newVersion"
-$replacementDate = "更新日期：$(Get-Date -Format 'yyyy-MM-dd')"
+$replacementPattern3 = "**版本**: $newVersion"
+$replacementDate1 = "更新日期：$(Get-Date -Format 'yyyy-MM-dd')"
+$replacementDate2 = "**最后更新**: $(Get-Date -Format 'yyyy-MM-dd')"
 
 $filesToUpdate = Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
-    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html'
+    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md'
 }
 
 # 同时处理 Custom.xaml
@@ -80,10 +84,12 @@ foreach ($file in $filesToUpdate) {
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
     $originalContent = $content
     
-    # 替换版本号和日期（三种格式都替换）
+    # 替换版本号和日期（所有格式都替换）
     $content = $content -replace $versionPattern1, $replacementPattern1
     $content = $content -replace $versionPattern2, $replacementPattern2
-    $content = $content -replace $datePattern, $replacementDate
+    $content = $content -replace $versionPattern3, $replacementPattern3
+    $content = $content -replace $datePattern1, $replacementDate1
+    $content = $content -replace $datePattern2, $replacementDate2
     
     if ($content -ne $originalContent) {
         $content | Out-File -FilePath $file.FullName -Encoding UTF8 -NoNewline
@@ -150,8 +156,16 @@ $zipPath = Join-Path $devRoot "PCL Log Analyzer.zip"
 
 # 删除旧的 ZIP（如果存在）
 if (Test-Path $zipPath) {
-    Remove-Item $zipPath -Force
-    Write-Host "  已删除旧的 ZIP 文件" -ForegroundColor Gray
+    try {
+        Remove-Item $zipPath -Force -ErrorAction Stop
+        Write-Host "  已删除旧的 ZIP 文件" -ForegroundColor Gray
+    } catch {
+        Write-Host "  ⚠ 无法删除旧的 ZIP 文件（可能正在使用）" -ForegroundColor Yellow
+        Write-Host "  正在重命名旧文件..." -ForegroundColor Gray
+        $backupZip = $zipPath -replace '\.zip$', ".backup_$(Get-Date -Format 'HHmmss').zip"
+        Move-Item $zipPath $backupZip -Force
+        Write-Host "  ✓ 已备份为: $([System.IO.Path]::GetFileName($backupZip))" -ForegroundColor Green
+    }
 }
 
 # 压缩文件夹
