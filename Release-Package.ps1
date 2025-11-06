@@ -121,5 +121,6 @@ Write-Host "发布文件: $zipName" -ForegroundColor Cyan
 Write-Host "文件位置: $devRoot" -ForegroundColor Gray
 Write-Host ""
 
-Start-Sleep -Seconds 3
+Write-Host "按任意键退出..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 

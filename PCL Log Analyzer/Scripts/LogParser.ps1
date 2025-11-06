@@ -226,8 +226,8 @@ foreach ($line in $logContent) {
         # 匹配 "GL info: NVIDIA GeForce RTX 5060 Laptop GPU/PCIe/SSE2"
         $analysis.GPU = $matches[1].Trim()
     }
-    elseif ($line -match 'Backend API:\s*(.+?)/(?:PCIe|SSE2)') {
-        # 只提取GPU名称，不包含GL version部分
+    elseif ($line -match 'Backend API:\s*(.+?)(?:\s*\(Supports|\s*/|$)') {
+        # 只提取GPU名称，去掉 /PCIe/SSE2 和 (Supports OpenGL...) 部分
         $gpuPart = $matches[1].Trim()
         $analysis.GPU = $gpuPart
     }
@@ -237,13 +237,15 @@ foreach ($line in $logContent) {
             $analysis.GPU = $matches[1].Trim()
         }
     }
-    elseif ($line -match 'GL_RENDERER\s*:\s*(.+?)\s*$') {
+    elseif ($line -match 'GL_RENDERER\s*:\s*(.+?)(?:\s*\(Supports|\s*/|$)') {
+        # 只提取GPU名称，去掉 /PCIe/SSE2 和 (Supports OpenGL...) 部分
         $analysis.GPU = $matches[1].Trim()
     }
     elseif ($line -match 'OpenGL Vendor:\s*(.+?)\s*$') {
         $analysis.GPU = $matches[1].Trim()
     }
-    elseif ($line -match 'GPU:\s*(.+?)\s*$') {
+    elseif ($line -match 'GPU:\s*(.+?)(?:\s*\(Supports|\s*/|$)') {
+        # 只提取GPU名称，去掉 /PCIe/SSE2 和 (Supports OpenGL...) 部分
         $analysis.GPU = $matches[1].Trim()
     }
     
@@ -266,7 +268,7 @@ foreach ($line in $logContent) {
     }
     
     # Mod Count
-    if ($line -match 'Loaded (\d+) mods?:') {
+    if ($line -match 'Load(?:ed|ing) (\d+) mods?:') {
         $modCount = [int]$matches[1]
         if ($modCount -gt $analysis.ModCount) {
             $analysis.ModCount = $modCount
@@ -855,17 +857,29 @@ if ($analysis.CrashReportPath -and (Test-Path $analysis.CrashReportPath)) {
                     }
                 }
                 # GL_RENDERER提取（兜底）
-                elseif ($line -match 'GL_RENDERER:\s*(.+?)\s*$' -and $crashGPU -eq "Unknown") {
+                elseif ($line -match 'GL_RENDERER:\s*(.+?)(?:\s*\(Supports|\s*/|$)' -and $crashGPU -eq "Unknown") {
+                    # 只提取GPU名称，去掉 /PCIe/SSE2 和 (Supports OpenGL...) 部分
                     $crashGPU = $matches[1].Trim()
                 }
                 
                 # Backend API 同时包含GPU和OpenGL信息（最高优先级，覆盖之前的选择）
-                # 格式: Backend API: AMD Radeon(TM) Graphics/PCIe/SSE2 GL version 4.6.0 Core Profile Context 25.3.2.250311, Advanced Micro Devices, Inc.
+                # 格式1: Backend API: AMD Radeon(TM) Graphics/PCIe/SSE2 GL version 4.6.0 Core Profile Context 25.3.2.250311, Advanced Micro Devices, Inc.
                 if ($line -match 'Backend API:\s*(.+?)(?:/(?:PCIe|SSE2))+\s*GL version\s+(.+?)(?:,|$)') {
                     $gpuName = $matches[1].Trim()
                     $glVersion = $matches[2].Trim()
                     
                     # 覆盖GPU名称（不包含OpenGL信息，避免重复）
+                    $crashGPU = $gpuName
+                    
+                    # 覆盖OpenGL版本
+                    $crashOpenGL = $glVersion
+                }
+                # 格式2: Backend API: NVIDIA GeForce RTX 3050 Laptop GPU/PCIe/SSE2 (Supports OpenGL 3.2.0 NVIDIA 565.90)
+                elseif ($line -match 'Backend API:\s*(.+?)(?:/(?:PCIe|SSE2))+\s*\(Supports OpenGL\s+(.+?)\)') {
+                    $gpuName = $matches[1].Trim()
+                    $glVersion = $matches[2].Trim()
+                    
+                    # 覆盖GPU名称
                     $crashGPU = $gpuName
                     
                     # 覆盖OpenGL版本

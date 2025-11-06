@@ -193,4 +193,5 @@ Write-Host "文件数: $($fileList.Count)" -ForegroundColor Gray
 Write-Host "ZIP大小: $zipSize KB" -ForegroundColor Gray
 Write-Host ""
 
-Start-Sleep -Seconds 3
+Write-Host "按任意键退出..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

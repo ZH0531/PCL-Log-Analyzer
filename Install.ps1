@@ -302,9 +302,16 @@ try {
         $oldReports = Join-Path $backupPath "Reports"
         $newReports = Join-Path $installPath "Reports"
         
-        if ((Test-Path $oldReports) -and (Test-Path $newReports)) {
+        if (Test-Path $oldReports) {
+            # 确保新的 Reports 文件夹存在
+            if (-not (Test-Path $newReports)) {
+                New-Item -ItemType Directory -Path $newReports -Force | Out-Null
+            }
+            
             Write-Host "  ✓ 正在迁移历史报告..." -ForegroundColor Gray
+            $reportCount = (Get-ChildItem "$oldReports\*.html" -ErrorAction SilentlyContinue).Count
             Copy-Item "$oldReports\*.html" $newReports -Force -ErrorAction SilentlyContinue
+            Write-Host "    已迁移 $reportCount 个报告" -ForegroundColor Gray
         }
         
         Remove-Item $backupPath -Recurse -Force
