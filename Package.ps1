@@ -84,12 +84,21 @@ foreach ($file in $filesToUpdate) {
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
     $originalContent = $content
     
-    # 替换版本号和日期（所有格式都替换）
-    $content = $content -replace $versionPattern1, $replacementPattern1
-    $content = $content -replace $versionPattern2, $replacementPattern2
-    $content = $content -replace $versionPattern3, $replacementPattern3
-    $content = $content -replace $datePattern1, $replacementDate1
-    $content = $content -replace $datePattern2, $replacementDate2
+    # 对 Custom.xaml 使用特殊处理，只替换特定位置的版本号
+    if ($file.Name -eq 'Custom.xaml') {
+        # 只替换顶部注释中的版本号和日期
+        $content = $content -replace '(?<=<!-- PCL 日志分析工具 - 自定义主页\s+作者：ZH0531\s+)版本：\d+\.\d+\.\d+', "版本：$newVersion"
+        $content = $content -replace '(?<=<!-- PCL 日志分析工具 - 自定义主页\s+作者：ZH0531\s+版本：\d+\.\d+\.\d+\s+)更新日期：\d{4}-\d{2}-\d{2}', "更新日期：$(Get-Date -Format 'yyyy-MM-dd')"
+        # 只替换卡片标题中的版本号
+        $content = $content -replace '(?<=Title="[^"]*?工具已更新至 )v\d+\.\d+\.\d+', "v$newVersion"
+    } else {
+        # 其他文件正常替换
+        $content = $content -replace $versionPattern1, $replacementPattern1
+        $content = $content -replace $versionPattern2, $replacementPattern2
+        $content = $content -replace $versionPattern3, $replacementPattern3
+        $content = $content -replace $datePattern1, $replacementDate1
+        $content = $content -replace $datePattern2, $replacementDate2
+    }
     
     if ($content -ne $originalContent) {
         $content | Out-File -FilePath $file.FullName -Encoding UTF8 -NoNewline
