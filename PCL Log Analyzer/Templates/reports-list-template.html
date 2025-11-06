@@ -58,15 +58,63 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#fafafa;line-height:1.6
 .no-results{text-align:center;padding:40px 20px;color:#9ca3af;background:#fff;border-radius:8px;border:1px solid #f0f0f0;grid-column:1/-1}
 .no-results-icon{font-size:42px;margin-bottom:10px;opacity:0.5}
 .no-results p{font-size:13px;color:#6b7280}
-@media(max-width:1024px){
-.container{flex-direction:column}
-.sidebar{width:100%;border-right:none;border-bottom:1px solid #f0f0f0;padding:16px}
-.logo-area{padding-bottom:12px}
-.stats-area{flex-direction:row}
-.footer-info{display:none}
-.toolbar{padding:12px 16px}
-.list-section{padding:16px}
+@media(max-width:1200px){
 .reports-container{grid-template-columns:1fr}
+}
+@media(max-width:1024px){
+.container{flex-direction:column;overflow:hidden}
+.sidebar{width:100%;border-right:none;border-bottom:1px solid #f0f0f0;padding:16px;flex:none}
+.logo-area{padding-bottom:12px}
+.stats-area{flex-direction:row;gap:8px;flex:none}
+.stat-card{flex:1;padding:12px}
+.stat-value{font-size:22px}
+.footer-info{display:none}
+.main-area{flex:1;min-height:0;overflow:hidden}
+.toolbar{padding:12px 16px;gap:12px;flex:none}
+.list-section{padding:16px;flex:1;min-height:0}
+.reports-container{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+.sidebar{padding:12px;flex:none}
+.stats-area{flex-wrap:wrap;flex:none}
+.stat-card{min-width:calc(50% - 4px);padding:10px}
+.stat-value{font-size:20px}
+.stat-label{font-size:10px}
+.main-area{flex:1;min-height:0;overflow:hidden}
+.toolbar{flex-direction:column;align-items:stretch;padding:12px;flex:none}
+.search-wrapper{min-width:100%;order:1}
+.controls-group{flex-wrap:wrap;justify-content:flex-start;order:2;margin-top:4px}
+.divider{display:none}
+.control-label{width:100%;margin-bottom:4px}
+.list-section{padding:12px;flex:1;min-height:0}
+.report-item{padding:12px;gap:12px}
+.report-number{width:24px;height:24px;font-size:12px}
+.report-name{font-size:13px}
+.report-meta{font-size:10px;gap:10px}
+}
+@media(max-width:480px){
+.logo-icon{font-size:28px}
+.logo-title{font-size:14px}
+.logo-subtitle{font-size:10px}
+.sidebar{flex:none}
+.stats-area{gap:6px;flex:none}
+.stat-card{padding:8px;min-width:calc(50% - 3px)}
+.stat-value{font-size:18px}
+.stat-label{font-size:9px}
+.main-area{flex:1;min-height:0;overflow:hidden}
+.toolbar{padding:10px;flex:none}
+.search-input{font-size:12px;padding:7px 10px 7px 32px}
+.search-icon{left:10px;font-size:12px}
+.control-btn{padding:5px 10px;font-size:11px}
+.control-label{font-size:11px}
+.list-section{padding:10px;flex:1;min-height:0}
+.list-header{font-size:12px;margin-bottom:10px}
+.reports-container{gap:10px}
+.report-item{padding:10px;gap:10px}
+.report-number{width:22px;height:22px;font-size:11px}
+.report-name{font-size:12px;margin-bottom:4px}
+.report-meta{font-size:10px;gap:8px}
+.badge,.status-badge{padding:2px 6px;font-size:9px}
 }
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:#fafafa}
@@ -97,7 +145,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#fafafa;line-height:1.6
 </div>
 </div>
 <div class='footer-info'>
-<p>PCL Log Analyzer v1.2.0</p>
+<p>PCL Log Analyzer v1.2.1</p>
 <a href='https://github.com/ZH0531/PCL-Log-Analyzer' target='_blank' class='footer-link'>GitHub</a>
 <span style='color:#d1d5db;margin:0 4px'>·</span>
 <a href='https://github.com/ZH0531/PCL-Log-Analyzer/issues' target='_blank' class='footer-link'>反馈</a>

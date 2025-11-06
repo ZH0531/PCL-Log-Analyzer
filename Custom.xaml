@@ -1,6 +1,6 @@
 ﻿<!-- PCL 日志分析工具 - 自定义主页
      作者：ZH0531
-     版本：1.2.0
+     版本：1.2.1
      更新日期：2025-11-06 -->
 
 <local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
@@ -44,25 +44,30 @@
             <local:MyButton Grid.Column="0" Margin="0,0,5,0" Height="35"
                 Text="📄 上次报告" 
                 EventType="打开文件" 
-                EventData="{path}PCL\PCL Log Analyzer\Reports\latest.html"
+                EventData="wscript.exe|&quot;{path}PCL\PCL Log Analyzer\Scripts\OpenReport.vbs&quot; &quot;{path}PCL\PCL Log Analyzer\Reports\latest.html&quot;"
                 ToolTip="打开最近一次生成的分析报告"/>
             
             <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="35"
                 Text="📁 历史报告" 
                 EventType="打开文件" 
-                EventData="PCL Log Analyzer/Reports/reports-list.html"
-                ToolTip="查看所有历史分析报告（每次分析后自动更新）"/>
+                EventData="wscript.exe|&quot;{path}PCL\PCL Log Analyzer\Scripts\OpenReport.vbs&quot; &quot;{path}PCL\PCL Log Analyzer\Reports\reports-list.html&quot;"
+                ToolTip="查看所有历史分析报告"/>
         </Grid>
         
     </StackPanel>
 </local:MyCard>
 
 <!-- 版本更新通知（可折叠） -->
-<local:MyCard Title="工具已更新至 v1.2.0 - 请手动点击更新工具（若已更新请忽略）" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
+<local:MyCard Title="🎉工具已更新至 v1.2.1 - 请手动点击更新工具（若已更新请忽略）" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
     <StackPanel Margin="25,25,23,15">
         <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#666666"
-            Text=" v1.2.0 重大更新："/>
+            Text=" v1.2.1 优化更新："/>
         <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
+            Text="• 优化 报告打开逻辑（优先使用系统默认浏览器，兼容性更好）&#xA;• 优化 清空报告功能改用VBS脚本（无窗口闪烁，启动速度更快）&#xA;• 优化 安装和打包脚本支持VBS文件类型&#xA;• 移除 查看启动脚本按钮（简化界面）"/>
+        
+        <TextBlock TextWrapping="Wrap" Margin="0,15,0,0" FontSize="12" Foreground="#888888"
+            Text=" v1.2.1 重大更新："/>
+        <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#888888"
             Text="• 新增 三层错误规则架构（主错误+根本原因+针对性建议）&#xA;• 新增 JSON规则库（规则驱动设计，便于开发者扩展）&#xA;• 新增 主要问题/次要问题智能分类（重点关注根本原因）&#xA;• 新增 智能混合分析（主日志+崩溃报告双重解析）&#xA;• 新增 崩溃报告系统信息补充（CPU、GPU、OpenGL、内存等详细信息）&#xA;• 新增 多个Mod兼容性错误检测规则（类文件缺失、网络资源、标签引用等）&#xA;• 新增 崩溃报告格式错误规则（Mod依赖缺失/版本不匹配）&#xA;• 优化 游戏目录路径检测（支持标准路径、整合包、自定义路径）&#xA;• 优化 系统信息完整性（崩溃报告优先，主日志备选）&#xA;• 优化 GPU/OpenGL信息提取（避免重复显示、优先独显）&#xA;• 优化 依赖错误详细信息显示（版本范围、实际版本自然语言描述）&#xA;• 优化 解决建议合并显示（主建议+原因建议一起展示）&#xA;• 修复 WARN级别Caused by错误关联问题&#xA;• 移除 已废弃的ErrorRules.ps1，规则全部迁移至Rules.json"/>
     </StackPanel>
 </local:MyCard>
@@ -71,19 +76,11 @@
 <local:MyCard Title="实用工具箱" Margin="0,0,0,15" CanSwap="True" IsSwaped="False">
     <StackPanel Margin="25,40,23,15">
         <local:MyListItem Margin="-5,2,-5,8"
-            Logo="pack://application:,,,/images/Blocks/CommandBlock.png"
-            Title="查看启动脚本" 
-            Info="查看上次游戏启动的完整命令（Java参数、内存配置、Mod加载等）" 
-            EventType="打开文件" 
-            EventData="notepad.exe|LatestLaunch.bat"
-            Type="Clickable" />
-        
-        <local:MyListItem Margin="-5,2,-5,8"
             Logo="pack://application:,,,/images/Blocks/Fabric.png" 
             Title="清空历史报告" 
             Info="删除所有已生成的分析报告文件，释放磁盘空间" 
             EventType="打开文件" 
-            EventData="powershell.exe|-NoExit -ExecutionPolicy Bypass -File &quot;{path}PCL\PCL Log Analyzer\Scripts\ClearReports.ps1&quot;"
+            EventData="wscript.exe|&quot;{path}PCL\PCL Log Analyzer\Scripts\ClearReports.vbs&quot;"
             Type="Clickable" />
         
         <local:MyListItem Margin="-5,2,-5,8"

@@ -70,7 +70,7 @@ $replacementDate1 = "更新日期：$(Get-Date -Format 'yyyy-MM-dd')"
 $replacementDate2 = "**最后更新**: $(Get-Date -Format 'yyyy-MM-dd')"
 
 $filesToUpdate = Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
-    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md'
+    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md' -or $_.Extension -eq '.vbs'
 }
 
 # 同时处理 Custom.xaml
@@ -109,7 +109,7 @@ Write-Host "[3/5] 扫描文件并计算大小..." -ForegroundColor Yellow
 
 $fileList = @()
 Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
-    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md'
+    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md' -or $_.Extension -eq '.vbs'
 } | ForEach-Object {
     $relativePath = $_.FullName.Replace($toolDir + '\', '').Replace('\', '/')
     $fileList += [PSCustomObject]@{
@@ -120,7 +120,7 @@ Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
 }
 
 if ($fileList.Count -eq 0) {
-    Write-Host "错误：未找到任何必需文件 (.ps1, .html, .json, .md)" -ForegroundColor Red
+    Write-Host "错误：未找到任何必需文件 (.ps1, .html, .json, .md, .vbs)" -ForegroundColor Red
     exit 1
 }
 

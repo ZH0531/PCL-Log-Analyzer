@@ -28,7 +28,7 @@ function Show-Complete {
 }
 
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  PCL 日志分析工具 v1.2.0" -ForegroundColor Cyan
+Write-Host "  PCL 日志分析工具 v1.2.1" -ForegroundColor Cyan
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
     
@@ -308,7 +308,64 @@ Show-Complete "历史报告列表已更新"
 
 Write-Host ""
 Write-Host "✓ 分析完成！正在打开报告..." -ForegroundColor Green
-Start-Process $reportPath
+
+# 使用浏览器打开HTML报告（优先顺序：默认浏览器 > Edge > 系统默认方式）
+$opened = $false
+
+try {
+    # 尝试1: 从注册表读取系统默认浏览器
+    Write-Host "  [调试] 尝试读取系统默认浏览器..." -ForegroundColor Gray
+    $progId = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" -Name ProgId -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ProgId
+    if ($progId) {
+        Write-Host "  [调试] 找到 ProgId: $progId" -ForegroundColor Gray
+        $browserCommand = Get-ItemProperty -Path "Registry::HKEY_CLASSES_ROOT\$progId\shell\open\command" -Name '(default)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty '(default)'
+        if ($browserCommand -and $browserCommand -match '"([^"]+)"') {
+            $browserPath = $matches[1]
+            Write-Host "  [调试] 浏览器路径: $browserPath" -ForegroundColor Gray
+            if (Test-Path $browserPath) {
+                Write-Host "  ✓ 使用系统默认浏览器打开" -ForegroundColor Green
+                Start-Process $browserPath -ArgumentList "`"$reportPath`"" -ErrorAction Stop
+                $opened = $true
+            } else {
+                Write-Host "  [调试] 浏览器路径不存在" -ForegroundColor Yellow
+            }
+        }
+    } else {
+        Write-Host "  [调试] 未找到默认浏览器配置" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "  [调试] 默认浏览器打开失败: $_" -ForegroundColor Yellow
+}
+
+if (-not $opened) {
+    try {
+        # 尝试2: 使用 Edge 浏览器
+        Write-Host "  [调试] 尝试使用 Edge 浏览器..." -ForegroundColor Gray
+        $edgePaths = @(
+            "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            "C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+        )
+        foreach ($edgePath in $edgePaths) {
+            if (Test-Path $edgePath) {
+                Write-Host "  ✓ 使用 Edge 浏览器打开" -ForegroundColor Green
+                Start-Process $edgePath -ArgumentList "`"$reportPath`"" -ErrorAction Stop
+                $opened = $true
+                break
+            }
+        }
+        if (-not $opened) {
+            Write-Host "  [调试] Edge 浏览器未找到" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  [调试] Edge 打开失败: $_" -ForegroundColor Yellow
+    }
+}
+
+if (-not $opened) {
+    # 兜底: 使用系统默认方式打开
+    Write-Host "  ✓ 使用系统默认方式打开" -ForegroundColor Cyan
+    Start-Process $reportPath
+}
     
     Write-Host ""
 Write-Host "窗口将在 5 秒后自动关闭..." -ForegroundColor Yellow
