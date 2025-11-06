@@ -17,7 +17,9 @@ PCL Log Analyzer 是一个专为 PCL（Plain Craft Launcher）设计的 Minecraf
 
 ### ✨ 核心特性
 
-- 🎯 **智能错误识别**：25+ 种常见错误类型，自动匹配并提供解决建议（欢迎issue！）
+- 🎯 **智能错误识别**：58+ 条错误检测规则，三层分析架构（主错误 + 根本原因 + 建议）
+- 📋 **JSON规则库**：规则驱动设计，可轻松扩展错误类型
+- 🔍 **混合分析**：主日志 + 崩溃报告双重解析，信息更完整
 - 📊 **可视化报告**：美观的 HTML 报告，支持历史记录查看
 - 🔄 **一键安装更新**：在线安装，自动版本检测和完整性验证
 - 🗂️ **历史报告管理**：带搜索、筛选、排序的历史报告列表
@@ -36,12 +38,14 @@ PCL/PCL Log Analyzer/        # 工具根目录
 │   ├── LogParser.ps1        # 日志解析模块
 │   ├── ReportGenerator.ps1  # 报告生成模块
 │   ├── GenerateReportsList.ps1  # 历史报告列表生成
-│   ├── ErrorRules.ps1       # 错误识别规则库
 │   ├── SelectLog.ps1        # 手动选择日志文件
 │   └── ClearReports.ps1     # 清理历史报告
 ├── Templates/               # HTML 模板文件夹
 │   ├── report-template.html        # 单个报告模板
 │   └── reports-list-template.html  # 历史报告列表模板
+├── Rules/                   # 规则库文件夹
+│   ├── Rules.json           # 错误识别规则库（JSON格式）
+│   └── README.md            # 规则编写说明文档
 ├── Custom.xaml.ini          # 版本控制文件
 └── Reports/                 # 生成的报告存放目录
     ├── latest.html          # 最新报告
@@ -64,6 +68,7 @@ PCL Log Analyzer Dev/
 └── PCL Log Analyzer/        # 工具源码目录
     ├── Scripts/             # （同上）
     ├── Templates/           # （同上）
+    ├── Rules/               # （同上）
     └── Custom.xaml.ini      # 工具内版本文件
 ```
 
@@ -125,35 +130,36 @@ PCL Log Analyzer Dev/
 
 
 
-## 🎯 错误识别类型
+## 🎯 错误识别能力
 
-| 类型 | 描述 | 严重程度 |
-|------|------|----------|
-| Mod初始化失败 | Mod 构造函数或初始化阶段崩溃 | 严重 |
-| Mod加载失败 | Mod 文件损坏或加载异常 | 严重 |
-| Mod依赖缺失 | 缺少必需的前置 Mod | 严重 |
-| Mod版本不匹配 | Mod 与游戏版本不兼容 | 严重 |
-| Mod不兼容 | 不同 Mod 之间的冲突 | 严重 |
-| Incompatible mods found! | Fabric/Quilt 官方不兼容检测 | 严重 |
-| Minecraft has crashed! | 游戏崩溃标志 | 严重 |
-| 模型加载失败 | 方块/物品模型加载错误 | 中等 |
-| 资源路径错误 | 资源文件路径不存在 | 中等 |
-| Java版本不兼容 | Java 版本过旧或过新 | 严重 |
-| 内存不足 | JVM 堆内存溢出 | 严重 |
-| 网络连接失败 | 无法连接认证/资源服务器 | 轻微 |
-| 配置文件错误 | Mod 配置文件格式错误 | 中等 |
-| 命令执行失败 | 游戏内命令执行错误 | 轻微 |
-| Mixin应用失败 | Mixin 注入/混入失败 | 中等 |
+### 📋 规则库统计
 
-> **🔍 帮助我们完善错误识别**
+- **总规则数**：58+ 条
+- **causedBy 规则**：15+ 条
+- **优先级分级**：Priority 1-99（智能排序）
+- **严重级别**：严重/中等/轻微
+
+### 🔍 主要识别类型
+
+| 类别 | 包含的错误类型 | 示例 |
+|------|--------------|------|
+| **Mod依赖问题** | Mod依赖缺失、版本不匹配、依赖版本不匹配 | `requires ftblibrary [2000.1.0,)` |
+| **Mod加载问题** | Mod加载失败、初始化失败、兼容模块失败 | `Failed to create mod instance` |
+| **环境冲突** | Fabric API冲突、类文件缺失 | `Fabric API detected in Forge` |
+| **配置错误** | 配置文件格式错误、配置数据缺失 | `MalformedJsonException` |
+| **数据解析** | 标签引用缺失、配方错误、成就错误、战利品表错误 | `Couldn't load tag` |
+| **资源问题** | 模型加载失败、资源路径错误、纹理加载失败 | `Model not found` |
+| **网络问题** | 身份验证失败、网络资源获取失败（含SSL证书原因） | `PKIX path building failed` |
+| **系统问题** | 内存不足、Java版本不兼容 | `OutOfMemoryError` |
+| **游戏崩溃** | 服务器线程崩溃、游戏崩溃、Mod状态异常 | `Preparing crash report` |
+
+
+
+> **📖 完整规则列表**：查看 [`Rules/Rules.json`](./PCL%20Log%20Analyzer/Rules/Rules.json)
 > 
-> 工具主要识别 **ERROR** 和 **FATAL** 级别的日志，部分重要的 **WARN** 级别也会识别（如 Mod 加载器不匹配）。
+> **✏️ 自定义规则**：参考 [`Rules/README.md`](./PCL%20Log%20Analyzer/Rules/README.md)
 > 
-> **我们需要你的帮助！** 🙏
-> - 如果你遇到了工具未能识别的错误类型
-> - 如果你有特殊的崩溃日志
-> - 请在 [GitHub Issues](https://github.com/ZH0531/PCL-Log-Analyzer/issues) 提交日志或反馈
-> - 你的贡献将帮助工具支持更多错误类型，让更多玩家受益！
+> **🙏 帮助完善**：发现未识别的错误？欢迎在 [GitHub Issues](https://github.com/ZH0531/PCL-Log-Analyzer/issues) 反馈！
 
 ## ⚙️ 版本控制文件格式
 
@@ -190,10 +196,9 @@ Templates/reports-list-template.html=15000
   可选：刷新 CDN 缓存
        ↓
   CDN 分发 (https://pcl.log.zh8888.top/)
-  ```
+```
   
-  ```
-
+```
 用户端:
   PCL 主页 Custom.xaml (联网更新)
        ↓
@@ -326,7 +331,7 @@ function Get-ErrorTypes {
         },
         
         # 最后一个规则可以不加逗号
-        @{ Pattern = '/ERROR\]'; Type = '一般错误'; Severity = '中等'; Priority = 50 }
+        @{ Pattern = '/ERROR\]'; Type = '未分类错误'; Severity = '中等'; Priority = 50 }
     )
 }
 ```
@@ -342,7 +347,7 @@ function Get-ErrorSuggestion {
         '新错误类型' { 
             return @{ 
                 Title = 'YourID';  # 建议标识（简短唯一）
-                Text = '问题描述和解决方法：①第一步 ②第二步 ③第三步'  # 建议内容
+                Text = '新错误类型：简短描述问题原因。说明解决方案，控制在2-3句话内'  # 建议内容
             }
         }
     }
@@ -358,7 +363,7 @@ function Get-ErrorSuggestion {
 'Java版本过低' { 
     return @{ 
         Title = 'Java'; 
-        Text = 'Java版本不兼容：当前Java版本过低。解决方法：在PCL设置中切换到Java 17或更高版本' 
+        Text = 'Java版本过低：当前Java版本不支持该Mod。在PCL设置中切换到Java 17或更高版本' 
     }
 }
 ```

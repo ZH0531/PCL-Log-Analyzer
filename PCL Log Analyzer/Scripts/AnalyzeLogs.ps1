@@ -28,7 +28,7 @@ function Show-Complete {
 }
 
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  PCL 日志分析工具 v1.1.0" -ForegroundColor Cyan
+Write-Host "  PCL 日志分析工具 v1.2.0" -ForegroundColor Cyan
     Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
     
@@ -90,32 +90,70 @@ if (!$skipAutoFind) {
 
 if (Test-Path $batFile) {
     $batContent = Get-Content $batFile -Encoding UTF8
+    $titleVersion = $null
+    
     foreach ($line in $batContent) {
-        if ($line -match 'cd /D "(.+?\\versions\\(.+?))\\"') {
-            $lastVersionPath = $matches[1]
-            $lastVersion = $matches[2]
-            Write-Host "  找到: $lastVersion" -ForegroundColor Green
+        # 提取版本名（从title行）
+        if ($line -match 'title\s+启动\s*-\s*(.+)') {
+            $titleVersion = $matches[1].Trim()
         }
+        
+        # 提取游戏路径（通用匹配：cd /D "任意绝对路径\"）
+        if ($line -match 'cd /D "([A-Za-z]:\\.+?)\\"') {
+            $gamePath = $matches[1]
+            
+            # 判断路径类型并提取版本名
+            if ($gamePath -match '\\versions\\([^\\]+)$') {
+                # 标准格式: ...\versions\版本名
+                $lastVersionPath = $gamePath
+                $lastVersion = $matches[1]
+                Write-Host "  找到: $lastVersion" -ForegroundColor Green
+            }
+            elseif ($gamePath -match '\\.minecraft$') {
+                # 整合包格式: ...\整合包名\.minecraft
+                $lastVersionPath = $gamePath
+                if ($titleVersion) {
+                    $lastVersion = $titleVersion
+                } elseif ($gamePath -match '\\([^\\]+)\\.minecraft$') {
+                    $lastVersion = $matches[1]
+                } else {
+                    $lastVersion = "Modpack"
+                }
+                Write-Host "  找到: $lastVersion (整合包)" -ForegroundColor Green
+            }
+            else {
+                # 其他自定义格式：使用title或最后一级目录名
+                $lastVersionPath = $gamePath
+                if ($titleVersion) {
+                    $lastVersion = $titleVersion
+                } elseif ($gamePath -match '\\([^\\]+)$') {
+                    $lastVersion = $matches[1]
+                } else {
+                    $lastVersion = "Custom"
+                }
+                Write-Host "  找到: $lastVersion (自定义路径)" -ForegroundColor Green
+            }
+            Write-Host "  路径: $lastVersionPath" -ForegroundColor Gray
+        }
+        
+        # 提取Java版本
         if ($line -match '"(.+?\\(JDK[^\\]+))\\bin\\java\.exe"') {
             $javaFromBat = $matches[2]
         }
+        # 提取内存配置
         if ($line -match '-Xmx(\d+)m') {
             $memMb = [int]$matches[1]
             $memoryFromBat = "$([Math]::Round($memMb/1024, 1)) GB ($memMb MB)"
         }
     }
+} else {
+    Write-Host "  [警告] 未找到 LatestLaunch.bat 文件" -ForegroundColor Yellow
+    Write-Host "  建议：先启动一次游戏，或使用【手动选择日志】功能" -ForegroundColor Cyan
 }
 
 if (!$lastVersionPath) {
-    $versionsDir = Join-Path $mcDir "versions"
-    if (Test-Path $versionsDir) {
-        $latestFolder = Get-ChildItem $versionsDir -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-        if ($latestFolder) {
-            $lastVersion = $latestFolder.Name
-            $lastVersionPath = $latestFolder.FullName
-            Write-Host "  使用最近的: $lastVersion" -ForegroundColor Green
-        }
-    }
+    Write-Host "  [警告] 无法从启动脚本中获取游戏路径" -ForegroundColor Yellow
+    Write-Host "  建议：使用【手动选择日志】功能" -ForegroundColor Cyan
 }
 
     if (!$lastVersionPath) {
@@ -235,9 +273,6 @@ Show-Processing "正在生成 HTML 报告..."
 $timePrefix = Get-Date -Format 'yyMMdd-HHmmss'
 $reportFile = "$timePrefix-$logFileName.html"
 $reportPath = Join-Path $reportsDir $reportFile
-
-# 加载错误规则（用于获取建议）
-. (Join-Path $scriptRoot "ErrorRules.ps1")
 
 # 调用报告生成模块
 $reportGeneratorScript = Join-Path $scriptRoot "ReportGenerator.ps1"

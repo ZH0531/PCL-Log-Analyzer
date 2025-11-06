@@ -1,0 +1,530 @@
+{
+  "version": "1.0.0",
+  "description": "PCL Log Analyzer 错误识别规则库",
+  "lastUpdated": "2025-01-31",
+  
+  "errors": [
+    {
+      "id": "fabric_forge_conflict_1",
+      "name": "Fabric环境安装了Forge Mod",
+      "pattern": "/WARN\\].*Found \\d+ non-fabric mods",
+      "severity": "严重",
+      "priority": 1,
+      "collectDetails": true,
+      "suggestion": "在Fabric环境中检测到Forge Mod。移除Forge Mod或切换到Forge加载器"
+    },
+    {
+      "id": "forge_fabric_conflict_1",
+      "name": "Forge环境安装了Fabric Mod",
+      "pattern": "/WARN\\].*Found \\d+ non-forge mods",
+      "severity": "严重",
+      "priority": 1,
+      "collectDetails": true,
+      "suggestion": "在Forge环境中检测到Fabric Mod。移除Fabric Mod或切换到Fabric加载器"
+    },
+    {
+      "id": "mod_mc_version_incompatible",
+      "name": "Mod与MC版本不兼容",
+      "pattern": "/ERROR\\].*Incompatible mods found",
+      "severity": "严重",
+      "priority": 2,
+      "collectDetails": true,
+      "suggestion": "某些Mod与当前Minecraft版本不兼容。检查Mod版本，下载对应MC版本的Mod"
+    },
+    {
+      "id": "mod_dependency_version_mismatch",
+      "name": "Mod依赖版本不匹配",
+      "pattern": "Mod ID: '([^']+)',.*Requested by: '([^']+)',.*Actual version:",
+      "severity": "严重",
+      "priority": 2,
+      "collectDetails": true,
+      "suggestion": "Mod的前置版本不符合要求。查看错误中提到的版本要求，下载符合要求的前置Mod版本"
+    },
+    {
+      "id": "mod_version_mismatch",
+      "name": "Mod版本不匹配",
+      "pattern": "Mod (\\S+) requires (neoforge|forge|minecraft) ([\\d\\.]+)",
+      "severity": "严重",
+      "priority": 3,
+      "collectDetails": true,
+      "suggestion": "Mod要求的Forge/NeoForge/Minecraft版本与当前版本不匹配。更新Mod加载器版本或更换兼容的Mod版本"
+    },
+    {
+      "id": "mod_dependency_missing",
+      "name": "Mod依赖缺失",
+      "pattern": "Mod (\\S+) requires (\\S+) ([\\d\\.]+)",
+      "severity": "严重",
+      "priority": 4,
+      "collectDetails": true,
+      "suggestion": "缺少Mod的前置依赖。检查错误信息中缺少的Mod，从CurseForge或Modrinth下载并安装"
+    },
+    {
+      "id": "mod_dependency_problem",
+      "name": "Mod依赖问题",
+      "pattern": "/ERROR\\].*(Missing or unsupported mandatory dependencies|ModResolutionException)",
+      "severity": "严重",
+      "priority": 5,
+      "suggestion": "Mod的依赖关系存在问题。检查所有Mod的前置要求，确保依赖Mod都已安装且版本正确"
+    },
+    {
+      "id": "config_format_error",
+      "name": "配置文件格式错误",
+      "pattern": "/ERROR\\].*(Failed to parse|Failed to load).*(config|json|data)|/ERROR\\].*(Not a string|Not a json array)",
+      "severity": "严重",
+      "priority": 6,
+      "suggestion": "配置文件格式错误（通常是JSON格式问题）。检查配置文件语法，确保没有多余逗号、缺少引号等问题。可使用在线JSON验证工具检查",
+      "causedBy": [
+        {
+          "pattern": "MalformedJsonException|JsonSyntaxException",
+          "reason": "JSON格式错误",
+          "suggestion": "配置文件的JSON格式不正确。常见问题：多余或缺少逗号、引号未闭合、括号不匹配。找到对应的配置文件，使用在线JSON验证工具（如jsonlint.com）检查并修复"
+        }
+      ]
+    },
+    {
+      "id": "mod_load_failed",
+      "name": "Mod加载失败",
+      "pattern": "Failed to create mod instance\\. ModID: ([a-zA-Z0-9_\\-]+)",
+      "severity": "严重",
+      "priority": 7,
+      "collectDetails": true,
+      "suggestion": "Mod加载时失败。检查Mod文件是否完整、版本是否兼容，查看下方具体原因",
+      "causedBy": [
+        {
+          "pattern": "MalformedJsonException|JsonSyntaxException",
+          "reason": "配置文件格式错误",
+          "suggestion": "该Mod的配置文件JSON格式不正确。删除该Mod的配置文件让游戏重新生成，或使用JSON验证工具手动修复"
+        },
+        {
+          "pattern": "ClassNotFoundException",
+          "reason": "类文件缺失",
+          "suggestion": "Mod缺少必需的Java类文件。可能原因：Mod文件损坏、前置Mod缺失或版本不匹配。尝试重新下载该Mod并检查所有前置依赖"
+        },
+        {
+          "pattern": "NoSuchMethodError|NoClassDefFoundError",
+          "reason": "Mod版本不兼容",
+          "suggestion": "Mod与当前游戏版本或其他Mod版本不兼容。检查该Mod是否支持当前Minecraft版本和Mod加载器版本"
+        },
+        {
+          "pattern": "OutOfMemoryError",
+          "reason": "内存不足",
+          "suggestion": "启动时内存不足。增加分配给游戏的内存（在PCL中调整-Xmx参数），建议至少分配4GB"
+        }
+      ]
+    },
+    {
+      "id": "mod_load_failed_generic",
+      "name": "Mod加载失败",
+      "pattern": "/FATAL\\].*Error during.*loading|/ERROR\\].*Failed to create mod instance",
+      "severity": "严重",
+      "priority": 7,
+      "collectDetails": false,
+      "suggestion": "Mod加载时失败。查看关键日志了解具体失败的Mod和原因"
+    },
+    {
+      "id": "mod_init_failed",
+      "name": "Mod初始化失败",
+      "pattern": "/ERROR\\].*(Caught exception during event FMLClientSetupEvent|Exception caught during firing event)",
+      "severity": "严重",
+      "priority": 11,
+      "suggestion": "Mod在初始化阶段失败。可能是Mod配置问题或与其他Mod冲突，查看下方具体原因",
+      "causedBy": [
+        {
+          "pattern": "ClassNotFoundException",
+          "reason": "类文件缺失",
+          "suggestion": "初始化时缺少必需的Java类文件。检查前置Mod是否完整安装，或尝试重新下载相关Mod"
+        },
+        {
+          "pattern": "NoSuchMethodError|NoClassDefFoundError",
+          "reason": "Mod版本不兼容",
+          "suggestion": "Mod与当前游戏版本或其他Mod版本不兼容。检查所有Mod是否支持当前Minecraft版本和Mod加载器"
+        },
+        {
+          "pattern": "ClassCastException",
+          "reason": "类型转换错误",
+          "suggestion": "Mod之间接口不兼容。更新所有相关Mod到最新版本"
+        },
+        {
+          "pattern": "NullPointerException",
+          "reason": "空指针异常",
+          "suggestion": "Mod尝试访问不存在的对象。可能是配置问题或前置Mod缺失"
+        }
+      ]
+    },
+    {
+      "id": "mod_compatibility_issue",
+      "name": "Mod兼容性问题",
+      "pattern": "/ERROR\\].*ClassCastException",
+      "severity": "严重",
+      "priority": 12,
+      "suggestion": "Mod之间存在兼容性问题（类型转换错误）。尝试更新相关Mod到最新版本，或移除冲突的Mod",
+      "causedBy": [
+        {
+          "pattern": "ClassCastException",
+          "reason": "类型转换错误",
+          "suggestion": "某个Mod尝试将对象转换为不兼容的类型。这通常是Mod版本不匹配导致的，更新所有相关Mod或逐个移除最近添加的Mod"
+        }
+      ]
+    },
+    {
+      "id": "mixin_conflict",
+      "name": "Mixin冲突",
+      "pattern": "/ERROR\\].*MixinApplyError|/ERROR\\].*Mixin.*failed",
+      "severity": "严重",
+      "priority": 13,
+      "suggestion": "Mod的Mixin注入失败，通常是Mod之间冲突。尝试逐个移除最近添加的Mod，找出冲突源"
+    },
+    {
+      "id": "mod_registry_conflict",
+      "name": "Mod注册冲突",
+      "pattern": "/ERROR\\].*(Unbound values in registry|Registry loading errors)",
+      "severity": "严重",
+      "priority": 14,
+      "suggestion": "Mod注册物品/方块时发生冲突。可能是缺少前置Mod或Mod版本不匹配"
+    },
+    {
+      "id": "class_not_found",
+      "name": "缺少类文件",
+      "pattern": "/ERROR\\].*ClassNotFoundException|/FATAL\\].*ClassNotFoundException|class not found",
+      "severity": "严重",
+      "priority": 3,
+      "collectDetails": true,
+      "suggestion": "缺少必需的Java类文件。如果缺少的是IModBusEvent、IEventBus等Forge核心类，说明Forge Mod在非Forge环境运行（如Fabric+Connector）。其他常见原因：Mod版本不兼容、前置Mod缺失。优先检查是否有Fabric API冲突"
+    },
+    {
+      "id": "out_of_memory",
+      "name": "内存溢出",
+      "pattern": "/ERROR\\].*OutOfMemoryError|/FATAL\\].*OutOfMemoryError",
+      "severity": "严重",
+      "priority": 16,
+      "suggestion": "游戏内存不足。在PCL启动设置中增加Java最大内存（-Xmx参数），建议至少分配4GB（4096MB）或更高"
+    },
+    {
+      "id": "manual_debug_crash",
+      "name": "手动调试崩溃",
+      "pattern": "Manually triggered debug crash",
+      "severity": "轻微",
+      "priority": 19,
+      "suggestion": "这是手动触发的调试崩溃（通常是按F3+C），不是真正的游戏问题"
+    },
+    {
+      "id": "server_thread_crashed",
+      "name": "服务器线程崩溃",
+      "pattern": "\\[Server thread/FATAL\\].*Preparing crash report",
+      "severity": "严重",
+      "priority": 31,
+      "suggestion": "服务器线程崩溃，通常是其他错误的连带结果。解决上方显示的根本原因问题"
+    },
+    {
+      "id": "game_crashed",
+      "name": "游戏崩溃",
+      "pattern": "/FATAL\\].*(Preparing crash report|Crash report saved)",
+      "severity": "严重",
+      "priority": 32,
+      "suggestion": "游戏崩溃通常是其他错误的连带结果。请查看上方重点关注的问题，解决根本原因后崩溃会自动消失"
+    },
+    {
+      "id": "fatal_error",
+      "name": "致命错误",
+      "pattern": "/FATAL\\]",
+      "severity": "严重",
+      "priority": 33,
+      "collectDetails": true,
+      "suggestion": "检测到致命错误。这通常是其他问题的结果，请查看上方的具体错误类型找到根本原因"
+    },
+    {
+      "id": "mod_state_broken",
+      "name": "Mod状态异常",
+      "pattern": "/ERROR\\].*Cowardly refusing to send event.*to a broken mod state",
+      "severity": "严重",
+      "priority": 34,
+      "collectDetails": true,
+      "suggestion": "由于前面的错误导致Mod处于损坏状态。这是连带错误，解决根本原因（如依赖缺失、版本不匹配）后即可修复"
+    },
+    {
+      "id": "mod_skip_loading",
+      "name": "Mod跳过加载",
+      "pattern": "/ERROR\\].*Skipping.*due to previous error",
+      "severity": "严重",
+      "priority": 35,
+      "collectDetails": true,
+      "suggestion": "由于前面的错误导致某些Mod被跳过加载。解决上方的根本原因问题即可"
+    },
+    {
+      "id": "auth_failed",
+      "name": "身份验证失败",
+      "pattern": "/ERROR\\].*(Failed to verify authentication|Failed to fetch user properties|Status: 401)",
+      "severity": "中等",
+      "priority": 36,
+      "suggestion": "Microsoft账号验证失败（401错误）。在PCL设置中重新登录账号，或检查网络连接",
+      "causedBy": [
+        {
+          "pattern": "PKIX path building failed|unable to find valid certification path",
+          "reason": "SSL证书验证失败",
+          "suggestion": "SSL证书验证失败。可能是网络环境问题（如使用了代理）或Java证书库问题。尝试：1）检查网络连接；2）更新Java版本；3）使用离线登录"
+        }
+      ]
+    },
+    {
+      "id": "unreported_exception",
+      "name": "未报告异常",
+      "pattern": "/ERROR\\].*Unreported exception thrown",
+      "severity": "中等",
+      "priority": 37,
+      "suggestion": "发生了未被正确捕获的异常。通常不影响游戏运行，可查看关键日志了解详情"
+    },
+    {
+      "id": "cert_validation_failed",
+      "name": "证书验证失败",
+      "pattern": "PKIX path building failed|unable to find valid certification path",
+      "severity": "轻微",
+      "priority": 38,
+      "suggestion": "SSL证书验证失败。通常是网络问题或Java证书库问题。如果不影响游戏运行可忽略，否则检查网络连接或更新Java"
+    },
+    {
+      "id": "fabric_api_conflict",
+      "name": "Fabric API冲突",
+      "pattern": "/ERROR\\].*Fabric API detected.*not a Fabric mod",
+      "severity": "严重",
+      "priority": 2,
+      "suggestion": "检测到Fabric API，说明当前环境是Fabric或混合加载器（如Connector），但某些Mod是Forge版本。这是导致类文件缺失、崩溃的根本原因。解决方法：1）切换到纯Forge环境并移除所有Fabric Mod；2）或切换到纯Fabric环境并移除所有Forge Mod"
+    },
+    {
+      "id": "model_load_failed",
+      "name": "模型加载失败",
+      "pattern": "/ERROR\\].*Failed to load model|/ERROR\\].*ModelManager",
+      "severity": "中等",
+      "priority": 40,
+      "collectDetails": true,
+      "suggestion": "物品或方块模型加载失败。可能是资源包问题或Mod资源文件损坏，通常不影响游戏运行"
+    },
+    {
+      "id": "resource_path_error",
+      "name": "资源路径错误",
+      "pattern": "/ERROR\\].*Invalid path in pack",
+      "severity": "中等",
+      "priority": 41,
+      "collectDetails": true,
+      "suggestion": "资源包中的路径无效。检查资源包是否完整，尝试重新下载或移除问题资源包"
+    },
+    {
+      "id": "resource_registry_missing",
+      "name": "资源注册缺失",
+      "pattern": "/ERROR\\].*was null.*due to some mod not registering",
+      "severity": "中等",
+      "priority": 42,
+      "collectDetails": true,
+      "suggestion": "某些资源未正确注册。可能是Mod缺失或版本不匹配，检查相关Mod的前置依赖"
+    },
+    {
+      "id": "recipe_duplicate",
+      "name": "配方重复注册",
+      "pattern": "/ERROR\\].*Recipe.*has been added for twice",
+      "severity": "中等",
+      "priority": 43,
+      "collectDetails": true,
+      "suggestion": "多个Mod尝试注册相同的配方。通常不影响游戏，但可能导致合成表混乱。如有问题，尝试移除冲突的Mod"
+    },
+    {
+      "id": "mod_compat_module_failed",
+      "name": "Mod兼容模块加载失败",
+      "pattern": "/ERROR\\].*task can not load:",
+      "severity": "严重",
+      "priority": 4,
+      "collectDetails": true,
+      "suggestion": "Mod的兼容模块加载失败。这通常是Mod主体初始化失败的连带结果（如类文件缺失、环境不兼容）。检查该Mod是否有ERROR级别的其他错误，优先解决主体问题"
+    },
+    {
+      "id": "mod_config_data_missing",
+      "name": "Mod配置数据缺失",
+      "pattern": "/ERROR\\].*Config data is missing",
+      "severity": "轻微",
+      "priority": 45,
+      "suggestion": "Mod配置数据缺失。通常是Mod首次运行或配置文件损坏，重启游戏或删除配置文件让其重新生成"
+    },
+    {
+      "id": "mod_data_parse_error",
+      "name": "Mod数据解析错误",
+      "pattern": "/ERROR\\].*Failed to parse value.*NaN",
+      "severity": "轻微",
+      "priority": 46,
+      "suggestion": "Mod数据解析时遇到非法值（NaN）。通常不影响游戏，如有问题检查该Mod的配置文件"
+    },
+    {
+      "id": "animation_parse_failed",
+      "name": "动画解析失败",
+      "pattern": "/ERROR\\].*Unable to parse animation",
+      "severity": "轻微",
+      "priority": 47,
+      "suggestion": "动画文件解析失败。可能是材质包问题，通常不影响游戏运行"
+    },
+    {
+      "id": "network_resource_load_failed",
+      "name": "网络资源加载失败",
+      "pattern": "/ERROR\\].*Failed to load.*information",
+      "severity": "轻微",
+      "priority": 48,
+      "suggestion": "从网络加载资源失败。通常是网络连接问题，不影响游戏本体运行",
+      "causedBy": [
+        {
+          "pattern": "PKIX path building failed|unable to find valid certification path",
+          "reason": "SSL证书验证失败",
+          "suggestion": "SSL证书验证失败导致无法加载网络资源。不影响游戏运行，可以忽略。如需解决，请检查网络连接或更新Java"
+        }
+      ]
+    },
+    {
+      "id": "network_timeout",
+      "name": "网络超时",
+      "pattern": "/ERROR\\].*Read timed out|io exception while checking versions",
+      "severity": "轻微",
+      "priority": 48,
+      "suggestion": "网络请求超时。检查网络连接，通常不影响游戏运行"
+    },
+    {
+      "id": "profile_key_pair_failed",
+      "name": "密钥对获取失败",
+      "pattern": "/ERROR\\].*Failed to retrieve profile key pair",
+      "severity": "轻微",
+      "priority": 49,
+      "suggestion": "玩家密钥对获取失败。通常不影响单人游戏，如需联机请检查账号登录状态"
+    },
+    {
+      "id": "embeddium_compat_warning",
+      "name": "Embeddium兼容性警告",
+      "pattern": "/ERROR\\].*Mod mixin into Embeddium",
+      "severity": "轻微",
+      "priority": 50,
+      "suggestion": "检测到Mod注入了Embeddium内部。Embeddium团队不对此类情况提供支持，如遇到渲染问题请移除相关Mod"
+    },
+    {
+      "id": "at_file_missing",
+      "name": "AT文件缺失",
+      "pattern": "/ERROR\\].*Access transformer file.*does not exist",
+      "severity": "轻微",
+      "priority": 51,
+      "suggestion": "访问转换器（AT）文件缺失。通常是Mod打包问题，不影响大部分功能。如有问题，尝试重新下载该Mod"
+    },
+    {
+      "id": "internal_error",
+      "name": "内部错误",
+      "pattern": "/ERROR\\].*(Negative index in crash report handler)",
+      "severity": "轻微",
+      "priority": 98,
+      "suggestion": "游戏内部组件的非关键错误，通常不影响游戏运行，可以忽略"
+    },
+    {
+      "id": "mod_network_fetch_failed",
+      "name": "Mod网络资源获取失败",
+      "pattern": "/ERROR\\].*(Failed to fetch|Failed to load.*from|Failed to download)",
+      "severity": "轻微",
+      "priority": 52,
+      "suggestion": "Mod尝试从网络获取资源失败。通常是网络连接问题或远程服务器维护，不影响游戏本体运行",
+      "causedBy": [
+        {
+          "pattern": "PKIX path building failed|unable to find valid certification path",
+          "reason": "SSL证书验证失败",
+          "suggestion": "SSL证书验证失败。通常是网络环境问题（如代理）或Java证书库问题。不影响游戏运行，可以忽略"
+        },
+        {
+          "pattern": "IOException|Read timed out|Connection refused|SocketTimeoutException",
+          "reason": "网络连接超时",
+          "suggestion": "无法连接到远程服务器。检查网络连接，通常不影响游戏运行"
+        }
+      ]
+    },
+    {
+      "id": "tag_missing_reference",
+      "name": "标签引用缺失",
+      "pattern": "/ERROR\\].*Couldn't load tag.*as it is missing following references",
+      "severity": "轻微",
+      "priority": 53,
+      "collectDetails": true,
+      "suggestion": "某些标签（Tag）引用了不存在的内容。通常是Mod之间的轻微不兼容或某些Mod被移除导致，一般不影响游戏运行"
+    },
+    {
+      "id": "loot_table_parse_error",
+      "name": "战利品表解析错误",
+      "pattern": "/ERROR\\].*Couldn't parse element loot_tables",
+      "severity": "轻微",
+      "priority": 54,
+      "collectDetails": true,
+      "suggestion": "战利品表（Loot Table）文件解析失败。可能是Mod配置问题或Mod不兼容，通常只影响该战利品表，不影响游戏运行"
+    },
+    {
+      "id": "recipe_parse_error",
+      "name": "配方解析错误",
+      "pattern": "/ERROR\\].*Parsing error loading recipe",
+      "severity": "轻微",
+      "priority": 55,
+      "collectDetails": true,
+      "suggestion": "合成配方文件解析失败。可能是Mod配置问题或某些物品缺失，通常只影响该配方，不影响游戏运行"
+    },
+    {
+      "id": "advancement_parse_error",
+      "name": "成就解析错误",
+      "pattern": "/ERROR\\].*Parsing error loading.*advancement",
+      "severity": "轻微",
+      "priority": 56,
+      "collectDetails": true,
+      "suggestion": "成就（Advancement）文件解析失败。可能是Mod配置问题或某些物品缺失，通常只影响该成就，不影响游戏运行"
+    },
+    {
+      "id": "spawner_parse_error",
+      "name": "刷怪笼配置错误",
+      "pattern": "/ERROR\\].*Couldn't parse spawner",
+      "severity": "轻微",
+      "priority": 57,
+      "collectDetails": true,
+      "suggestion": "刷怪笼（Spawner）配置解析失败。可能是Mod配置问题或某些生物缺失，通常只影响该刷怪笼，不影响游戏运行"
+    },
+    {
+      "id": "dispenser_behavior_error",
+      "name": "发射器行为错误",
+      "pattern": "/ERROR\\].*Failed to restore original behavior for item",
+      "severity": "轻微",
+      "priority": 58,
+      "suggestion": "发射器行为恢复失败。这是Mod之间对发射器行为修改的轻微冲突，通常不影响游戏运行"
+    },
+    {
+      "id": "server_unexpected_exception",
+      "name": "服务器意外异常",
+      "pattern": "/ERROR\\].*Encountered an unexpected exception",
+      "severity": "严重",
+      "priority": 18,
+      "suggestion": "服务器线程遇到意外异常导致崩溃。这通常是某个严重错误的结果，请查看关键日志中此错误之前的内容找到根本原因",
+      "causedBy": [
+        {
+          "pattern": "NullPointerException.*Cannot invoke.*because.*is null",
+          "reason": "空指针异常（Mod逻辑错误）",
+          "suggestion": "某个Mod在调用对象方法时，该对象为空（null）。这通常是Mod初始化失败或依赖关系问题导致。检查相关Mod是否有前置依赖缺失或版本不匹配"
+        },
+        {
+          "pattern": "NullPointerException",
+          "reason": "空指针异常",
+          "suggestion": "某个Mod访问了空对象。可能是Mod初始化失败、依赖缺失或环境不兼容导致"
+        },
+        {
+          "pattern": "ClassNotFoundException|NoClassDefFoundError",
+          "reason": "类文件缺失",
+          "suggestion": "缺少必需的Java类文件。通常是Mod与Forge/NeoForge版本不兼容，或Forge和Fabric模组混装"
+        },
+        {
+          "pattern": "NoSuchMethodError",
+          "reason": "方法不存在（版本不兼容）",
+          "suggestion": "Mod调用的方法在当前版本中不存在。检查Mod是否支持当前Minecraft版本和Mod加载器版本"
+        }
+      ]
+    },
+    {
+      "id": "uncategorized_error",
+      "name": "未分类错误",
+      "pattern": "/ERROR\\]",
+      "severity": "中等",
+      "priority": 99,
+      "collectDetails": true,
+      "suggestion": "检测到未被分类的错误。请查看关键日志了解详情，如果确认是常见错误类型，欢迎反馈以便我们完善规则库"
+    }
+  ]
+}
+

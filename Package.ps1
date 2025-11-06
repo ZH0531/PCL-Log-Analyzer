@@ -103,7 +103,7 @@ Write-Host "[3/5] 扫描文件并计算大小..." -ForegroundColor Yellow
 
 $fileList = @()
 Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
-    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html'
+    $_.Extension -eq '.ps1' -or $_.Extension -eq '.html' -or $_.Extension -eq '.json' -or $_.Extension -eq '.md'
 } | ForEach-Object {
     $relativePath = $_.FullName.Replace($toolDir + '\', '').Replace('\', '/')
     $fileList += [PSCustomObject]@{
@@ -114,7 +114,7 @@ Get-ChildItem -Path $toolDir -Recurse -File | Where-Object {
 }
 
 if ($fileList.Count -eq 0) {
-    Write-Host "错误：未找到任何 .ps1 或 .html 文件" -ForegroundColor Red
+    Write-Host "错误：未找到任何必需文件 (.ps1, .html, .json, .md)" -ForegroundColor Red
     exit 1
 }
 

@@ -94,7 +94,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f7fa;padding:24px;li
         </div>
         
 <div class='footer'>
-<p>PCL Log Analyzer v1.1.0 • 分析时间: {{TIMESTAMP}}</p>
+<p>PCL Log Analyzer v1.2.0 • 分析时间: {{TIMESTAMP}}</p>
 <p style='font-size:11px;color:#aaa;margin-top:6px'>此报告仅供参考 • 基于日志自动生成</p>
         </div>
     </div>
@@ -156,81 +156,177 @@ function renderErrors() {
         return;
     }
     
+    // 分类错误：使用 Severity 和 Priority 动态判断
+    // 严重 = 重要问题，中等/轻微 = 次要问题
+    // 同时考虑 Priority >= 30 的连带错误也归为次要
+    const majorErrors = errorsData.filter(e => 
+        e.Severity === '严重' && (e.Priority == null || e.Priority < 30)
+    );
+    const minorErrors = errorsData.filter(e => 
+        e.Severity !== '严重' || (e.Priority != null && e.Priority >= 30)
+    );
+    
     let html = '';
-    errorsData.forEach(e => {
-        html += renderError(e);
-    });
+    
+    // 显示重要错误
+    if (majorErrors.length > 0) {
+        html += "<div style='margin-bottom:12px;padding:8px;background:#fff3cd;border-left:3px solid #ffc107;border-radius:4px;font-size:13px;color:#856404'>";
+        html += `<strong>🔍 重点关注</strong>：以下 ${majorErrors.length} 个问题可能是崩溃的根本原因`;
+        html += "</div>";
+        
+        majorErrors.forEach(e => {
+            html += renderError(e);
+        });
+    }
+    
+    // 显示次要错误（可折叠）
+    if (minorErrors.length > 0) {
+        html += "<div style='margin-top:16px;margin-bottom:8px;padding:8px;background:#e7f3ff;border-left:3px solid:#2196f3;border-radius:4px;font-size:12px;color:#0d47a1;cursor:pointer' onclick='toggleMinorErrors()'>";
+        html += `<span id='minor-toggle'>▼</span> <strong>次要问题（${minorErrors.length}个）</strong>：通常不影响游戏或是连带错误，点击查看详情`;
+        html += "</div>";
+        html += "<div id='minor-errors' style='display:none'>";
+        minorErrors.forEach(e => {
+            html += renderError(e);
+        });
+        html += "</div>";
+    }
+    
     container.innerHTML = html;
+}
+
+// 切换次要错误显示
+function toggleMinorErrors() {
+    const container = document.getElementById('minor-errors');
+    const toggle = document.getElementById('minor-toggle');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        toggle.textContent = '▲';
+    } else {
+        container.style.display = 'none';
+        toggle.textContent = '▼';
+    }
+}
+
+// 切换次要建议显示
+function toggleMinorSuggestions() {
+    const container = document.getElementById('minor-suggestions');
+    const toggle = document.getElementById('minor-sug-toggle');
+    if (container && toggle) {
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            toggle.textContent = '▲';
+        } else {
+            container.style.display = 'none';
+            toggle.textContent = '▼';
+        }
+    }
 }
 
 // 渲染单个错误
 function renderError(e) {
     let html = "<div class='error-box'>";
     
+    // 构建错误类型标题（带 Mod 名称，限制显示数量）
+    let errorTitle = e.Type;
+    if (e.ModNames && e.ModNames.length > 0) {
+        // 过滤空字符串
+        const validModNames = e.ModNames.filter(m => m && m.trim());
+        if (validModNames.length <= 3) {
+            errorTitle += ` - ${validModNames.join(', ')}`;
+        } else {
+            const displayMods = validModNames.slice(0, 3).join(', ');
+            const remaining = validModNames.length - 3;
+            errorTitle += ` - ${displayMods} 等${remaining}个`;
+        }
+    }
+    
     if (e.IsCollectDetails) {
         // 收集详情类型
         if (e.Type === 'Mod初始化失败') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个Mod)</div>`;
                 html += `<div class='error-code'>涉及的Mod: ${e.Details.sort().join(', ')}</div>`;
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
         } else if (e.Type === 'Mod加载失败') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
-                html += `<div class='error-code'>失败的Mod: ${e.Details.sort().join(', ')}</div>`;
+                // 过滤空字符串
+                const validDetails = e.Details.filter(d => d && d.trim());
+                html += `<div class='error-type'>${errorTitle} (${validDetails.length}个Mod)</div>`;
+                html += `<div class='error-code'>失败的Mod: ${validDetails.sort().join(', ')}</div>`;
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
         } else if (e.Type === 'Fabric环境安装了Forge Mod' || e.Type === 'Forge环境安装了Fabric Mod') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个文件)</div>`;
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个文件)</div>`;
                 html += `<div class='error-code'>错误的Mod: ${e.Details.sort().join(', ')}</div>`;
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
         } else if (e.Type === 'Mod与MC版本不兼容') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个Mod)</div>`;
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个Mod)</div>`;
                 html += `<div class='error-code'>不兼容的Mod: ${e.Details.sort().join(', ')}</div>`;
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
-        } else if (e.Type === 'Mod版本不匹配') {
+        } else if (e.Type === 'Mod依赖版本不匹配') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个问题)</div>`;
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个依赖)</div>`;
                 e.Details.forEach(detail => {
                     html += `<div class='error-code'>• ${detail}</div>`;
                 });
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
+        } else if (e.Type === 'Mod版本不匹配') {
+            if (e.Details && e.Details.length > 0) {
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个问题)</div>`;
+                e.Details.forEach(detail => {
+                    html += `<div class='error-code'>• ${detail}</div>`;
+                });
+            } else {
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 html += "<div class='error-code'>详见关键日志</div>";
             }
         } else if (e.Type === 'Mod依赖缺失') {
             if (e.Details && e.Details.length > 0) {
-                html += `<div class='error-type'>${e.Type} (${e.Details.length}个依赖)</div>`;
-                html += `<div class='error-code'>缺失的Mod: ${e.Details.sort().join(', ')}</div>`;
+                html += `<div class='error-type'>${errorTitle} (${e.Details.length}个依赖)</div>`;
+                e.Details.forEach(detail => {
+                    html += `<div class='error-code'>• ${detail}</div>`;
+                });
             } else {
-                html += `<div class='error-type'>${e.Type}</div>`;
+                html += `<div class='error-type'>${errorTitle}</div>`;
                 const firstLine = cleanErrorLine(e.Content);
                 html += `<div class='error-code'>${firstLine}（详见关键日志）</div>`;
             }
         } else {
             // 其他收集详情类型：显示计数
             const countText = (e.Count && e.Count > 1) ? ` (共${e.Count}${getCountUnit(e.Type)})` : '';
-            html += `<div class='error-type'>${e.Type}${countText}</div>`;
+            html += `<div class='error-type'>${errorTitle}${countText}</div>`;
             html += `<div class='error-code'>${getErrorDescription(e)}</div>`;
         }
     } else {
         // 普通错误类型
-        html += `<div class='error-type'>${e.Type}</div>`;
+        html += `<div class='error-type'>${errorTitle}</div>`;
         const cleanContent = cleanErrorLine(e.Content);
         html += `<div class='error-code'>${cleanContent}</div>`;
+    }
+    
+    // 显示 CausedBy 原因（如果有）
+    if (e.CausedBy && e.CausedBy.length > 0) {
+        html += "<div style='margin-top:8px;padding-left:16px;border-left:3px solid #FF9800'>";
+        e.CausedBy.forEach(cause => {
+            html += `<div style='color:#F57C00;font-size:13px;margin-top:4px'>原因: ${cause.Reason}</div>`;
+        });
+        html += "</div>";
     }
     
     html += "</div>";
@@ -266,7 +362,9 @@ function getCountUnit(type) {
         '资源注册缺失': '项',
         'Mod状态异常': '条事件被拒绝',
         'Mod跳过加载': '次',
-        '一般错误': '条',
+        '配方重复注册': '条',
+        'Mod兼容模块加载失败': '个模块',
+        '未分类错误': '条',
         '致命错误': '条'
     };
     return units[type] || '个';
@@ -289,8 +387,8 @@ function getErrorDescription(e) {
         return cleanErrorLine(e.Content);
     }
     
-    if (e.Type === '一般错误' && e.Count && e.Count > 1) {
-        return '检测到多条未分类的错误，请在关键日志中查看详细信息';
+    if (e.Type === '未分类错误') {
+        return '检测到未被识别的错误类型，请在关键日志中查看详细信息。如发现重复问题可通过右上角反馈至 GitHub 帮助完善识别规则';
     }
     
     if (e.Type === '致命错误') {
@@ -299,10 +397,6 @@ function getErrorDescription(e) {
         } else {
             return '检测到致命错误，这通常是其他错误的结果，请查看上方的其他错误类型找到根本原因';
         }
-    }
-    
-    if (e.Type === '一般错误' && (!e.Count || e.Count === 1)) {
-        return cleanErrorLine(e.Content);
     }
     
     return '详见关键日志';
@@ -327,8 +421,14 @@ function extractPattern(log) {
     // 移除具体的事件名（必须在类名替换之前！）
     pattern = pattern.replace(/event\s+[\w\.\$]+/gi, 'event <EVENT>');
     
-    // 移除具体的资源路径（如 eternal_starlight:trims/...）
-    pattern = pattern.replace(/[a-z0-9_]+:[a-z0-9_\/\-\.]+/gi, '<PATH>');
+    // 移除大写下划线变量名（如 MSM_VTD_FERMENTING_JAR）
+    pattern = pattern.replace(/\b[A-Z][A-Z0-9_]{2,}\b/g, '<VAR>');
+    
+    // 移除具体的资源路径（如 loot_tables:idas:chests/xxx，支持多级冒号）
+    pattern = pattern.replace(/[a-z0-9_]+:[a-z0-9_:\/\-\.]+/gi, '<PATH>');
+    
+    // 移除剩余的斜杠路径（如 chests/dread_citadel/xxx）
+    pattern = pattern.replace(/[a-z0-9_]+\/[a-z0-9_\/\-\.]+/gi, '<PATH>');
     
     // 移除具体的文件路径（如 ./config/...）
     pattern = pattern.replace(/\.\/[a-z0-9_\/\-\.]+/gi, '<FILE>');

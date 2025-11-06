@@ -337,9 +337,10 @@ $requiredFiles = @(
     "Scripts\GenerateReportsList.ps1",
     "Scripts\SelectLog.ps1",
     "Scripts\ClearReports.ps1",
-    "Scripts\ErrorRules.ps1",
     "Templates\report-template.html",
     "Templates\reports-list-template.html",
+    "Rules\Rules.json",
+    "Rules\README.md",
     "Custom.xaml.ini"
 )
 

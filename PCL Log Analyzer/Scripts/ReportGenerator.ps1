@@ -10,8 +10,10 @@ param(
     [string]$ScriptRoot = $PSScriptRoot
 )
 
-# 加载错误规则（用于获取建议）
-. (Join-Path $ScriptRoot "ErrorRules.ps1")
+# 加载错误规则（从JSON）
+$rulesPath = Join-Path (Split-Path $ScriptRoot -Parent) "Rules\Rules.json"
+$rulesJson = Get-Content $rulesPath -Raw -Encoding UTF8 | ConvertFrom-Json
+$allRules = $rulesJson.errors
 
 # ============================================
 # 1. 排序错误并生成建议
@@ -24,9 +26,61 @@ $displayErrorCount = $sortedErrors.Count
 
 $suggestions = @()
 foreach ($err in $sortedErrors) {
-    $suggestion = Get-ErrorSuggestion -ErrorType $err.Type
-    if ($suggestion -and !($suggestions | Where-Object {$_.Title -eq $suggestion.Title})) {
-        $suggestions += $suggestion
+    # 从 JSON 规则中获取主建议
+    $matchedRule = $allRules | Where-Object { $_.id -eq $err.RuleId } | Select-Object -First 1
+    
+    if ($matchedRule -and $matchedRule.suggestion) {
+        # 检查是否已存在此错误类型的建议
+        $existingSuggestion = $suggestions | Where-Object {$_.Title -eq $err.Type} | Select-Object -First 1
+        
+        if ($existingSuggestion) {
+            # 如果已存在，只添加新的原因建议（如果有）
+            if ($err.CausedBy -and $err.CausedBy.Count -gt 0) {
+                foreach ($cause in $err.CausedBy) {
+                    if ($cause.Suggestion) {
+                        # 检查是否已有此原因
+                        $hasThisCause = $false
+                        foreach ($existingCause in $existingSuggestion.CausedBySuggestions) {
+                            if ($existingCause.Reason -eq $cause.Reason) {
+                                $hasThisCause = $true
+                                break
+                            }
+                        }
+                        
+                        if (-not $hasThisCause) {
+                            $existingSuggestion.CausedBySuggestions += @{
+                                Reason = $cause.Reason
+                                Text = $cause.Suggestion
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            # 创建新的建议对象
+            $mainSuggestion = @{
+                Title = $err.Type
+                Text = $matchedRule.suggestion
+                ErrorType = $err.Type
+                Severity = $err.Severity
+                Priority = $err.Priority
+                CausedBySuggestions = @()
+            }
+            
+            # 添加原因建议（如果有）
+            if ($err.CausedBy -and $err.CausedBy.Count -gt 0) {
+                foreach ($cause in $err.CausedBy) {
+                    if ($cause.Suggestion) {
+                        $mainSuggestion.CausedBySuggestions += @{
+                            Reason = $cause.Reason
+                            Text = $cause.Suggestion
+                        }
+                    }
+                }
+            }
+            
+            $suggestions += $mainSuggestion
+        }
     }
 }
 
@@ -68,6 +122,8 @@ $errorsJsonData = @($sortedErrors | ForEach-Object {
         Content = $cleanContent
         Count = $_.Count
         Details = $_.Details
+        ModNames = $_.ModNames
+        CausedBy = $_.CausedBy
         Priority = $_.Priority
         # 只要Details数组不为空，就显示详情
         IsCollectDetails = ($_.Details.Count -gt 0)
@@ -84,16 +140,84 @@ if ($errorsJson -notmatch '^\s*\[') {
 }
 
 # ============================================
-# 4. 生成建议HTML
+# 4. 生成建议HTML（分类：重要 vs 次要）
+# 使用错误的 Severity 和 Priority 动态判断
 # ============================================
-$sugHtml = ""
-$i = 1
+$majorSuggestions = @()
+$minorSuggestionsList = @()
+
 foreach ($sug in $suggestions) {
-    $sugHtml += "<div class='sug-box'><strong>$i.</strong> $($sug.Text)</div>"
-    $i++
+    # 严重 + Priority < 30 = 重要建议
+    if ($sug.Severity -eq '严重' -and ($null -eq $sug.Priority -or $sug.Priority -lt 30)) {
+        $majorSuggestions += $sug
+    } else {
+        $minorSuggestionsList += $sug
+    }
 }
+
+$sugHtml = ""
 if ($suggestions.Count -eq 0) {
     $sugHtml = "<div class='empty-state'>暂无建议</div>"
+} else {
+    # 重点建议
+    if ($majorSuggestions.Count -gt 0) {
+        $sugHtml += "<div style='margin-bottom:12px;padding:8px;background:#fff3cd;border-left:3px solid #ffc107;border-radius:4px;font-size:13px;color:#856404'>"
+        $sugHtml += "<strong>🔍 重点建议</strong>：以下 $($majorSuggestions.Count) 条建议针对根本原因"
+        $sugHtml += "</div>"
+        
+        $i = 1
+        foreach ($sug in $majorSuggestions) {
+            $sugHtml += "<div class='sug-box'>"
+            $sugHtml += "<div style='margin-bottom:4px'><strong>$i. $($sug.Title)</strong></div>"
+            $sugHtml += "<div style='color:#333'>$($sug.Text)</div>"
+            
+            # 显示原因建议（如果有）
+            if ($sug.CausedBySuggestions -and $sug.CausedBySuggestions.Count -gt 0) {
+                $sugHtml += "<div style='margin-top:10px;padding-left:16px;border-left:3px solid #FF9800'>"
+                foreach ($cause in $sug.CausedBySuggestions) {
+                    $sugHtml += "<div style='margin-top:6px'>"
+                    $sugHtml += "<div style='color:#F57C00;font-weight:bold'>原因：$($cause.Reason)</div>"
+                    $sugHtml += "<div style='color:#666;margin-top:2px'>$($cause.Text)</div>"
+                    $sugHtml += "</div>"
+                }
+                $sugHtml += "</div>"
+            }
+            
+            $sugHtml += "</div>"
+            $i++
+        }
+    }
+    
+    # 次要建议（可折叠）
+    if ($minorSuggestionsList.Count -gt 0) {
+        $sugHtml += "<div style='margin-top:16px;margin-bottom:8px;padding:8px;background:#e7f3ff;border-left:3px solid:#2196f3;border-radius:4px;font-size:12px;color:#0d47a1;cursor:pointer' onclick='toggleMinorSuggestions()'>"
+        $sugHtml += "<span id='minor-sug-toggle'>▼</span> <strong>次要建议（$($minorSuggestionsList.Count)条）</strong>：通常是连带问题，点击查看"
+        $sugHtml += "</div>"
+        $sugHtml += "<div id='minor-suggestions' style='display:none'>"
+        
+        $i = 1
+        foreach ($sug in $minorSuggestionsList) {
+            $sugHtml += "<div class='sug-box'>"
+            $sugHtml += "<div style='margin-bottom:4px'><strong>$i. $($sug.Title)</strong></div>"
+            $sugHtml += "<div style='color:#333'>$($sug.Text)</div>"
+            
+            # 显示原因建议（如果有）
+            if ($sug.CausedBySuggestions -and $sug.CausedBySuggestions.Count -gt 0) {
+                $sugHtml += "<div style='margin-top:10px;padding-left:16px;border-left:3px solid #FF9800'>"
+                foreach ($cause in $sug.CausedBySuggestions) {
+                    $sugHtml += "<div style='margin-top:6px'>"
+                    $sugHtml += "<div style='color:#F57C00;font-weight:bold'>原因：$($cause.Reason)</div>"
+                    $sugHtml += "<div style='color:#666;margin-top:2px'>$($cause.Text)</div>"
+                    $sugHtml += "</div>"
+                }
+                $sugHtml += "</div>"
+            }
+            
+            $sugHtml += "</div>"
+            $i++
+        }
+        $sugHtml += "</div>"
+    }
 }
 
 # ============================================

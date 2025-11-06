@@ -44,6 +44,7 @@ if (-not (Test-Path $targetToolDir)) {
 $itemsToSync = @(
     @{ Name = "Scripts"; Type = "Directory" }
     @{ Name = "Templates"; Type = "Directory" }
+    @{ Name = "Rules"; Type = "Directory" }
     @{ Name = "Custom.xaml.ini"; Type = "File" }
 )
 
