@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "PCL Log Analyzer 错误识别规则库",
-  "lastUpdated": "2025-01-31",
+  "lastUpdated": "2025-11-07",
   
   "errors": [
     {
