@@ -1,13 +1,11 @@
-# PCL Log Analyzer
+# PCL Log Analyzer（Minecraft 日志分析工具）
 
-<div align="center">
 
 ![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-orange.svg)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 [![爱发电](https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E6%94%AF%E6%8C%81%E4%BD%9C%E8%80%85-946ce6?logo=github-sponsors)](https://afdian.com/a/zh8888)
 
-</div>
 
 > 一个轻量本地的 Minecraft 日志分析工具，智能识别错误，生成可视化报告
 
