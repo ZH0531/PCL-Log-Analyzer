@@ -1,7 +1,7 @@
 # PCL Log Analyzer（Minecraft 日志分析工具）
 
 
-![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-orange.svg)
+![License](https://img.shields.io/badge/license-MIT%20NonCommercial-orange.svg)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 [![爱发电](https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E6%94%AF%E6%8C%81%E4%BD%9C%E8%80%85-946ce6?logo=github-sponsors)](https://afdian.com/a/zh8888)
@@ -434,6 +434,6 @@ AnalyzeLogs.ps1 启动
   
 Made with ❤️ by ZH0531
 
-Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+Licensed under [MIT License with Non-Commercial Restriction](./LICENSE)
 
 </div>
