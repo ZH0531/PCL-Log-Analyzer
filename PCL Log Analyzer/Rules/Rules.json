@@ -202,7 +202,7 @@
     {
       "id": "manual_debug_crash",
       "name": "手动调试崩溃",
-      "pattern": "Manually triggered debug crash",
+      "pattern": "Reported exception thrown!",
       "severity": "轻微",
       "priority": 19,
       "suggestion": "这是手动触发的调试崩溃（通常是按F3+C），不是真正的游戏问题"

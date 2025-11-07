@@ -85,7 +85,7 @@ Write-Host ""
 # 检测 PCL 根目录（使用当前工作目录）
 $pclRoot = (Get-Location).Path
 
-Write-Host "[1/6] 环境检查..." -ForegroundColor Yellow
+Write-Host "[1/7] 环境检查..." -ForegroundColor Yellow
 
 # 检查 PowerShell 版本
 $psVersion = $PSVersionTable.PSVersion

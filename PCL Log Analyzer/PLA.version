@@ -1,6 +1,6 @@
 ﻿version=1.2.1
 Rules/README.md=4687
-Rules/Rules.json=23246
+Rules/Rules.json=23242
 Scripts/AnalyzeLogs.ps1=15105
 Scripts/ClearReports.vbs=1733
 Scripts/GenerateReportsList.ps1=6149
