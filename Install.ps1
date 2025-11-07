@@ -27,11 +27,12 @@ function Download-WithProgress {
         [string]$OutputPath
     )
     
-    $frames = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
-    $frameIndex = 0
-    
     # 创建 WebClient 对象
     $webClient = New-Object System.Net.WebClient
+    
+    # 设置CDN访问所需的Headers
+    $webClient.Headers.Add("Referer", "http://install.pcl2.server/")
+    $webClient.Headers.Add("User-Agent", "PCL2/InstallScript")
     
     # 注册进度事件
     $progressScript = {
@@ -45,13 +46,10 @@ function Download-WithProgress {
         $barLength = 50
         $filled = [Math]::Floor($barLength * $percent / 100)
         $empty = $barLength - $filled
-        $bar = ('█' * $filled) + ('░' * $empty)  # 实心方块
-        
-        # 动画帧
-        $frame = $script:currentFrame
+        $bar = ('█' * $filled) + ('░' * $empty)
         
         # 显示进度（同一行更新）
-        Write-Host "`r  $frame $bar $percent% ($([Math]::Round($received, 1)) KB / $([Math]::Round($total, 1)) KB)" -NoNewline -ForegroundColor Cyan
+        Write-Host "`r  $bar $percent% ($([Math]::Round($received, 1)) KB / $([Math]::Round($total, 1)) KB)" -NoNewline -ForegroundColor Cyan
     }
     
     Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action $progressScript | Out-Null
@@ -59,13 +57,6 @@ function Download-WithProgress {
     try {
         # 启动异步下载
         $download = $webClient.DownloadFileTaskAsync($Url, $OutputPath)
-        
-        # 动画循环（直到下载完成）
-        while (!$download.IsCompleted) {
-            $script:currentFrame = $frames[$frameIndex % $frames.Length]
-            $frameIndex++
-            Start-Sleep -Milliseconds 100
-        }
         
         # 等待下载完成
         $download.Wait()
@@ -130,12 +121,18 @@ Write-Host ""
 Write-Host "[3/7] 检查版本..." -ForegroundColor Yellow
 
 # 下载远程版本文件
-$versionUrl = "$CDNUrl/Custom.xaml.ini"
+$versionUrl = "$CDNUrl/PLA.version"
 $tempVersion = Join-Path $env:TEMP "remote.version"
+
+# 设置CDN访问所需的Headers
+$headers = @{
+    "Referer" = "http://install.pcl2.server/"
+    "User-Agent" = "PCL2/InstallScript"
+}
 
 try {
     $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest -Uri $versionUrl -OutFile $tempVersion -UseBasicParsing
+    Invoke-WebRequest -Uri $versionUrl -OutFile $tempVersion -UseBasicParsing -Headers $headers
     $versionContent = Get-Content $tempVersion
     
     # 解析版本（第一行：version=x.x.x）
@@ -163,7 +160,7 @@ try {
 }
 
 # 检查本地版本
-$localVersionFile = Join-Path $installPath "Custom.xaml.ini"
+$localVersionFile = Join-Path $installPath "PLA.version"
 $needsInstall = $true
 
 if (Test-Path $localVersionFile) {
@@ -258,7 +255,7 @@ if (-not $needsInstall) {
 }
 
 # 准备下载
-$zipUrl = "$CDNUrl/PCL Log Analyzer.zip"
+$zipUrl = "$CDNUrl/PCL%20Log%20Analyzer.zip"
 $tempZip = Join-Path $env:TEMP "PCL Log Analyzer.zip"
 
 Write-Host "[4/7] 下载安装包..." -ForegroundColor Yellow
@@ -349,7 +346,7 @@ $requiredFiles = @(
     "Templates\reports-list-template.html",
     "Rules\Rules.json",
     "Rules\README.md",
-    "Custom.xaml.ini"
+    "PLA.version"
 )
 
 $allOk = $true

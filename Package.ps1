@@ -147,13 +147,15 @@ foreach ($file in ($fileList | Sort-Object Path)) {
     $versionContent += "$($file.Path)=$($file.Size)"
 }
 
-# 写入两个版本文件
-$versionFile2 = Join-Path $toolDir "Custom.xaml.ini"
-$versionContent | Out-File -FilePath $versionFile1 -Encoding UTF8
-Write-Host "  已更新: Custom.xaml.ini" -ForegroundColor Green
+# 写入PLA.version到工具目录（包含版本号+文件列表）
+$versionFile = Join-Path $toolDir "PLA.version"
+$versionContent | Out-File -FilePath $versionFile -Encoding UTF8
+Write-Host "  已生成: PCL Log Analyzer/PLA.version" -ForegroundColor Green
 
-$versionContent | Out-File -FilePath $versionFile2 -Encoding UTF8
-Write-Host "  已更新: PCL Log Analyzer/Custom.xaml.ini" -ForegroundColor Green
+# Custom.xaml.ini 只保留版本号
+$iniFile = Join-Path $devRoot "Custom.xaml.ini"
+"version=$newVersion" | Out-File -FilePath $iniFile -Encoding UTF8
+Write-Host "  已更新: Custom.xaml.ini (仅版本号)" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
@@ -193,8 +195,9 @@ Write-Host "  打包完成！" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "输出文件：" -ForegroundColor Cyan
-Write-Host "  - Custom.xaml.ini (已更新)" -ForegroundColor White
-Write-Host "  - PCL Log Analyzer.zip" -ForegroundColor White
+Write-Host "  - Custom.xaml.ini (版本标识)" -ForegroundColor White
+Write-Host "  - PLA.version (版本+文件列表)" -ForegroundColor White
+Write-Host "  - PCL Log Analyzer.zip (工具包)" -ForegroundColor White
 Write-Host ""
 Write-Host "版本: $newVersion" -ForegroundColor Gray
 Write-Host "日期: $currentDate" -ForegroundColor Gray

@@ -76,15 +76,18 @@ Write-Host "[1/3] 检查文件..." -ForegroundColor Yellow
 
 $devRoot = $PSScriptRoot
 $zipFile = Join-Path $devRoot "PCL Log Analyzer.zip"
+$toolDir = Join-Path $devRoot "PCL Log Analyzer"
+$versionFile = Join-Path $toolDir "PLA.version"
 $iniFile = Join-Path $devRoot "Custom.xaml.ini"
 $installFile = Join-Path $devRoot "Install.ps1"
 $xamlFile = Join-Path $devRoot "Custom.xaml"
 
 $filesToUpload = @(
-    @{ Local = $zipFile; Oss = "PCL Log Analyzer.zip"; Required = $true },
     @{ Local = $iniFile; Oss = "Custom.xaml.ini"; Required = $true },
-    @{ Local = $installFile; Oss = "Install.ps1"; Required = $true },
-    @{ Local = $xamlFile; Oss = "Custom.xaml"; Required = $true }
+    @{ Local = $versionFile; Oss = "PLA.version"; Required = $true },
+    @{ Local = $zipFile; Oss = "PCL Log Analyzer.zip"; Required = $true },
+    @{ Local = $xamlFile; Oss = "Custom.xaml"; Required = $true },
+    @{ Local = $installFile; Oss = "Install.ps1"; Required = $true }
 )
 
 $allOk = $true
@@ -133,14 +136,19 @@ Write-Host ""
 # ============================================
 # 读取版本号
 # ============================================
-$iniContent = Get-Content $iniFile
-$versionLine = $iniContent[0].Trim()
-if ($versionLine -match '^version=(.+)$') {
-    $version = $matches[1]
-    Write-Host "当前版本: v$version" -ForegroundColor Cyan
-    Write-Host ""
+if (Test-Path $versionFile) {
+    $versionContent = Get-Content $versionFile
+    $versionLine = $versionContent[0].Trim()
+    if ($versionLine -match '^version=(.+)$') {
+        $version = $matches[1]
+        Write-Host "当前版本: v$version" -ForegroundColor Cyan
+        Write-Host ""
+    } else {
+        Write-Host "  ⚠ 无法读取版本号" -ForegroundColor Yellow
+        Write-Host ""
+    }
 } else {
-    Write-Host "  ⚠ 无法读取版本号，使用默认文件名" -ForegroundColor Yellow
+    Write-Host "  ⚠ 版本文件不存在，请先运行 Package.ps1" -ForegroundColor Yellow
     Write-Host ""
 }
 

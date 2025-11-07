@@ -46,7 +46,7 @@ PCL/PCL Log Analyzer/        # 工具根目录
 ├── Rules/                   # 规则库文件夹
 │   ├── Rules.json           # 错误识别规则库（JSON格式）
 │   └── README.md            # 规则编写说明文档
-├── Custom.xaml.ini          # 版本控制文件
+├── PLA.version              # 版本+文件列表（用于更新检查和完整性验证）
 └── Reports/                 # 生成的报告存放目录
     ├── latest.html          # 最新报告
     ├── reports-list.html    # 历史报告列表页
@@ -58,18 +58,18 @@ PCL/PCL Log Analyzer/        # 工具根目录
 ```
 PCL Log Analyzer Dev/
 ├── Custom.xaml              # PCL 自定义主页源文件
-├── Custom.xaml.ini          # 版本配置文件
+├── Custom.xaml.ini          # 版本标识文件（仅版本号）
 ├── Install.ps1              # 在线安装/更新脚本
-├── Package.ps1              # 工具打包脚本（生成 PCL Log Analyzer.zip）
+├── Package.ps1              # 工具打包脚本（生成 PCL Log Analyzer.zip 和 PLA.version）
 ├── Release-Package.ps1      # Release打包脚本（生成预览发布包）
-├── Upload.ps1               # 阿里云 OSS 上传脚本（自动部署到 CDN）
+├── Upload.ps1               # 阿里云 OSS 上传脚本（自动部署5个文件到 CDN）
 ├── Sync.ps1                 # 开发同步用户端脚本，用于调试
 ├── README.md                # 项目文档
 └── PCL Log Analyzer/        # 工具源码目录
     ├── Scripts/             # （同上）
     ├── Templates/           # （同上）
     ├── Rules/               # （同上）
-    └── Custom.xaml.ini      # 工具内版本文件
+    └── PLA.version          # 版本+文件列表（打包时自动生成）
 ```
 
 ## 🚀 使用方法
@@ -163,61 +163,100 @@ PCL Log Analyzer Dev/
 
 ## ⚙️ 版本控制文件格式
 
-**Custom.xaml.ini** 格式：
+### **Custom.xaml.ini**（版本标识）
 
 ```ini
-version=1.2.0
+version=1.2.1
+```
+
+**说明**：
+- 只包含版本号，用于快速查询当前版本
+- 上传到CDN，用户端可直接获取
+
+---
+
+### **PLA.version**（完整版本信息）
+
+```ini
+version=1.2.1
 Rules/README.md=4687
 Rules/Rules.json=23246
-Scripts/AnalyzeLogs.ps1=12505
-Scripts/ClearReports.ps1=3075
+Scripts/AnalyzeLogs.ps1=15105
+Scripts/ClearReports.vbs=1733
 Scripts/GenerateReportsList.ps1=6149
-Scripts/LogParser.ps1=40890
+Scripts/LogParser.ps1=41811
+Scripts/OpenReport.vbs=1621
 Scripts/ReportGenerator.ps1=12323
 Scripts/SelectLog.ps1=2893
 Templates/report-template.html=24177
-Templates/reports-list-template.html=11793
+Templates/reports-list-template.html=13654
 ```
 
 **说明**：
 - 第一行：`version=主版本号`
 - 后续行：`文件路径=文件大小（字节）`
-- Install.ps1 会验证每个文件的大小（±1KB 容差）
+- Install.ps1 下载此文件进行版本检查和文件完整性验证
+- Package.ps1 打包时自动生成
+- 每个文件大小验证容差：±1KB
 
 ## 🌐 部署架构
 
+### **开发者端工作流**
+
 ```
-开发者端:
-  Custom.xaml.ini (修改版本号)
+1. Custom.xaml.ini (修改版本号：version=1.2.1)
        ↓
-  Package.ps1 (自动打包工具包)
+2. Package.ps1 (自动化打包)
+   • 读取版本号
+   • 扫描并计算所有文件大小
+   • 生成 PLA.version（版本+文件列表）
+   • 更新 Custom.xaml.ini（仅版本号）
+   • 打包 PCL Log Analyzer.zip
        ↓
-  Upload.ps1 (上传到阿里云 OSS)
+3. Upload.ps1 (上传5个文件到阿里云 OSS)
+   • Custom.xaml.ini
+   • PLA.version
+   • PCL Log Analyzer.zip
+   • Custom.xaml
+   • Install.ps1
        ↓
-  可选：刷新 CDN 缓存
+4. 可选：刷新 CDN 缓存
        ↓
-  CDN 分发 (https://pcl.log.zh8888.top/)
+5. CDN 分发 (https://pcl.log.zh8888.top/)
 ```
   
+### **用户端更新流程**
+
 ```
-用户端:
-  PCL 主页 Custom.xaml (联网更新)
+1. PCL 主页 Custom.xaml (联网更新)
        ↓
-  点击"安装/更新工具"按钮
+2. 点击"安装/更新工具"按钮
        ↓
-  Install.ps1 (从 CDN 下载)
+3. Install.ps1 (从 CDN 下载并执行)
        ↓
-  自动安装/更新到本地
+4. 下载 PLA.version 并解析版本信息
+       ↓
+5. 对比本地版本（如果存在）
+       ↓
+6. 决定是否需要安装/更新
+   • 首次安装 → 直接下载安装
+   • 版本相同 + 文件完整 → 退出（无需更新）
+   • 版本相同 + 文件损坏 → 重新下载修复
+   • 有新版本 → 备份 → 下载 → 安装 → 迁移报告
+       ↓
+7. 验证安装完整性（检查必需文件）
+       ↓
+8. 完成
 ```
 
-**更新流程说明**：
+**文件验证机制**：
 
-| 场景 | 行为 |
+| 验证项 | 说明 |
 |------|------|
-| 首次安装 | 下载并安装 |
-| 版本相同 + 文件完整 | 退出（无需更新） |
-| 版本相同 + 文件损坏 | 重新下载修复 |
-| 有新版本 | 备份 → 下载 → 安装 → 迁移报告 → 删除备份 |
+| 版本号 | 从 PLA.version 第一行读取 |
+| 文件列表 | PLA.version 包含所有必需文件路径和大小 |
+| 大小验证 | 每个文件大小容差 ±1KB |
+| 完整性检查 | 安装后验证所有必需文件是否存在 |
 | 更新失败 | 自动回滚到备份版本 |
 | 本地已安装 + 无法连接CDN | 跳过更新，使用本地版本 |
 

@@ -1,7 +1,7 @@
 ﻿<!-- PCL 日志分析工具 - 自定义主页
      作者：ZH0531
      版本：1.2.1
-     更新日期：2025-11-06 -->
+     更新日期：2025-11-07 -->
 
 <local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
     <StackPanel Margin="25,40,23,15">
@@ -30,7 +30,7 @@
             <local:MyButton Grid.Column="1" Margin="5,0,0,0" Height="40"
                 Text="🔄 安装/更新工具" 
                 EventType="打开文件" 
-                EventData="powershell.exe|-ExecutionPolicy Bypass -Command &quot;Set-Location '{path}PCL'; $ProgressPreference='SilentlyContinue'; $temp=[IO.Path]::Combine($env:TEMP,'PCL-Install.ps1'); Invoke-WebRequest -Uri 'https://pcl.log.zh8888.top/Install.ps1' -OutFile $temp -UseBasicParsing; &amp; $temp&quot;"
+                EventData="powershell.exe|-ExecutionPolicy Bypass -Command &quot;Set-Location '{path}PCL'; $ProgressPreference='SilentlyContinue'; $temp=[IO.Path]::Combine($env:TEMP,'PCL-Install.ps1'); Invoke-WebRequest -Uri 'https://pcl.log.zh8888.top/Install.ps1' -OutFile $temp -UseBasicParsing -Headers @{'Referer'='http://install.pcl2.server/';'User-Agent'='PCL2/InstallScript'}; &amp; $temp&quot;"
                 ToolTip="首次使用点此安装，或更新到最新版本（包含环境检查）"/>
         </Grid>
 
@@ -63,7 +63,7 @@
         <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" Foreground="#666666"
             Text=" v1.2.1 优化更新："/>
         <TextBlock TextWrapping="Wrap" Margin="15,5,0,0" FontSize="12" Foreground="#666666"
-            Text="• 优化 报告打开逻辑（优先使用系统默认浏览器，兼容性更好）&#xA;• 优化 清空报告功能改用VBS脚本（无窗口闪烁，启动速度更快）&#xA;• 优化 安装和打包脚本支持VBS文件类型&#xA;• 移除 查看启动脚本按钮（简化界面）"/>
+            Text="• 优化 报告打开逻辑（优先使用系统默认浏览器，兼容性更好）&#xA;• 优化 清空报告功能改用VBS脚本（无窗口闪烁，启动速度更快）&#xA;• 移除 查看启动脚本按钮（简化界面）"/>
         
         <TextBlock TextWrapping="Wrap" Margin="0,15,0,0" FontSize="12" Foreground="#888888"
             Text=" v1.2.0 重大更新："/>

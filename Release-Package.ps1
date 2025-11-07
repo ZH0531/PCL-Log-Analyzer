@@ -28,13 +28,14 @@ if (!(Test-Path $iniFile)) {
 }
 
 $iniContent = Get-Content $iniFile -Encoding UTF8
-$versionLine = $iniContent[0].Trim()
+$versionLine = ($iniContent | Where-Object { $_ -match '^version=' } | Select-Object -First 1)
 
-if ($versionLine -match '^version=(.+)$') {
-    $version = $matches[1]
+if ($versionLine -and $versionLine -match '^version=(.+)$') {
+    $version = $matches[1].Trim()
     Write-Host "  当前版本: v$version" -ForegroundColor Green
 } else {
     Write-Host "  ✗ 无法解析版本号" -ForegroundColor Red
+    Write-Host "    请确保 Custom.xaml.ini 第一行为: version=1.2.1" -ForegroundColor Yellow
     exit 1
 }
 
