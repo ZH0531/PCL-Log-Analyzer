@@ -11,7 +11,7 @@ param(
 $listTemplatePath = Join-Path $TemplateDir "reports-list-template.html"
 $listOutputPath = Join-Path $ReportsDir "reports-list.html"
 
-Write-Host "  正在生成历史报告列表..." -ForegroundColor Cyan
+Write-Host "    正在生成历史报告列表..." -ForegroundColor Cyan
 
 # 扫描Reports文件夹中的所有HTML文件（排除reports-list.html和latest.html）
 $reportFiles = Get-ChildItem -Path $ReportsDir -Filter "*.html" -File | Where-Object { 
