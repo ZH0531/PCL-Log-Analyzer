@@ -2,7 +2,7 @@
 Rules/README.md=4687
 Rules/Rules.json=23242
 Scripts/AnalyzeLogs.ps1=15105
-Scripts/ClearReports.vbs=1733
+Scripts/ClearReports.vbs=1668
 Scripts/GenerateReportsList.ps1=6151
 Scripts/LogParser.ps1=41811
 Scripts/OpenReport.vbs=1621

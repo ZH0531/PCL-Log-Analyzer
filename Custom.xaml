@@ -1,7 +1,7 @@
 ﻿<!-- PCL 日志分析工具 - 自定义主页
      作者：ZH0531
      版本：1.2.1
-     更新日期：2025-11-07 -->
+     更新日期：2025-11-08 -->
 
 <local:MyCard Title="Minecraft 日志分析工具" Margin="0,0,0,15" CanSwap="False">
     <StackPanel Margin="25,40,23,15">
