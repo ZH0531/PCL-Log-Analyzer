@@ -567,8 +567,45 @@ foreach ($line in $logContent) {
                     }
                 }
             }
+            
+            # 尝试匹配规则，如果匹配到重要错误，作为新错误添加
+            $matchedImportantRule = $false
+            foreach ($rule in $allRules) {
+                if ($line -match $rule.pattern) {
+                    # 只处理高优先级错误（priority <= 20），避免误报
+                    if ($rule.priority -le 20) {
+                        # 添加为新错误
+                        $existingError = $analysis.Errors | Where-Object { $_.Type -eq $rule.name }
+                        if ($existingError) {
+                            $existingError.Count++
+                        } else {
+                            $newError = @{
+                                Type = $rule.name
+                                Count = 1
+                                Content = $line.Trim()
+                                Severity = $rule.severity
+                                Details = @()
+                                ModNames = @()
+                                Priority = $rule.priority
+                                RuleId = $rule.id
+                                CausedBy = @()
+                            }
+                            $analysis.Errors += $newError
+                            $lastErrorIndex = $analysis.Errors.Count - 1
+                        }
+                        $matchedImportantRule = $true
+                    }
+                    break
+                }
+            }
+            
+            # 如果匹配到了重要错误，不要continue，让后续逻辑处理
+            if (-not $matchedImportantRule) {
+                continue
+            }
+        } else {
+            continue
         }
-        continue
     }
     
     foreach ($rule in $allRules) {
@@ -598,7 +635,12 @@ foreach ($line in $logContent) {
             $existingError = $analysis.Errors | Where-Object { $_.Type -eq $rule.name }
             
             # 提取 Mod 名称
-            $modName = Extract-ModName -Line $line
+            # 对于特定规则，优先使用捕获组中的Mod ID
+            if ($rule.id -eq 'mixin_conflict' -and $matches[1]) {
+                $modName = $matches[1]
+            } else {
+                $modName = Extract-ModName -Line $line
+            }
             
             if ($existingError) {
                 $existingError.Count++
@@ -620,7 +662,11 @@ foreach ($line in $logContent) {
                     $modPair = $null  # 用于智能去重：格式为 "依赖|请求者"
                     
                     # 判断规则类型，使用自然语言描述
-                    if ($rule.name -eq 'Mod依赖版本不匹配' -and $matches.Count -gt 2) {
+                    if ($rule.id -eq 'mixin_conflict') {
+                        # Mixin冲突：直接使用Mod ID
+                        $detail = $matches[1].Trim()
+                    }
+                    elseif ($rule.name -eq 'Mod依赖版本不匹配' -and $matches.Count -gt 2) {
                         # 新格式：Mod ID (依赖) + Requested by (请求者)
                         # 捕获组1=依赖, 捕获组2=请求者
                         $detail = "$($matches[2]) 需要 $($matches[1])"
@@ -692,7 +738,11 @@ foreach ($line in $logContent) {
                     # 组合多个捕获组形成详细信息（自然语言描述）
                     $detail = $null
                     
-                    if ($rule.name -eq 'Mod依赖版本不匹配' -and $matches.Count -gt 2) {
+                    if ($rule.id -eq 'mixin_conflict') {
+                        # Mixin冲突：直接使用Mod ID
+                        $detail = $matches[1].Trim()
+                    }
+                    elseif ($rule.name -eq 'Mod依赖版本不匹配' -and $matches.Count -gt 2) {
                         # 新格式：捕获组1=依赖, 捕获组2=请求者
                         $detail = "$($matches[2]) 需要 $($matches[1])"
                     }

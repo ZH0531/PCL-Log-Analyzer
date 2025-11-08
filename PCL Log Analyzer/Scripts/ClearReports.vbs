@@ -1,19 +1,19 @@
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 Set objShell = CreateObject("WScript.Shell")
 
-' »ñÈ¡±¨¸æÎÄ¼ş¼ĞÂ·¾¶
+' è·å–æŠ¥å‘Šæ–‡ä»¶å¤¹è·¯å¾„
 scriptPath = WScript.ScriptFullName
 scriptFolder = objFSO.GetParentFolderName(scriptPath)
 toolFolder = objFSO.GetParentFolderName(scriptFolder)
 reportsFolder = objFSO.BuildPath(toolFolder, "Reports")
 
-' ¼ì²éÎÄ¼ş¼ĞÊÇ·ñ´æÔÚ
+' æ£€æŸ¥æ–‡ä»¶å¤¹æ˜¯å¦å­˜åœ¨
 If Not objFSO.FolderExists(reportsFolder) Then
-    MsgBox "Î´ÕÒµ½±¨¸æÎÄ¼ş¼Ğ", vbInformation, "ÌáÊ¾"
+    MsgBox "æœªæ‰¾åˆ°æŠ¥å‘Šæ–‡ä»¶å¤¹", vbInformation, "æç¤º"
     WScript.Quit
 End If
 
-' Í³¼ÆHTMLÎÄ¼şÊıÁ¿
+' ç»Ÿè®¡HTMLæ–‡ä»¶æ•°é‡
 Set folder = objFSO.GetFolder(reportsFolder)
 fileCount = 0
 For Each file In folder.Files
@@ -22,18 +22,18 @@ For Each file In folder.Files
     End If
 Next
 
-' Èç¹ûÃ»ÓĞÎÄ¼ş
+' å¦‚æœæ²¡æœ‰æ–‡ä»¶
 If fileCount = 0 Then
-    MsgBox "Ã»ÓĞ¿ÉÉ¾³ıµÄ±¨¸æ", vbInformation, "ÌáÊ¾"
+    MsgBox "æ²¡æœ‰å¯åˆ é™¤çš„æŠ¥å‘Š", vbInformation, "æç¤º"
     WScript.Quit
 End If
 
-' È·ÈÏÉ¾³ı
-msg = "È·¶¨ÒªÉ¾³ı " & fileCount & " ¸ö±¨¸æÎÄ¼şÂğ£¿" & vbCrLf & vbCrLf & "´Ë²Ù×÷ÎŞ·¨³·Ïú£¡"
-result = MsgBox(msg, vbYesNo + vbExclamation, "È·ÈÏÉ¾³ı")
+' ç¡®è®¤åˆ é™¤
+msg = "ç¡®å®šè¦åˆ é™¤ " & fileCount & " ä¸ªæŠ¥å‘Šæ–‡ä»¶å—ï¼Ÿ" & vbCrLf & vbCrLf & "æ­¤æ“ä½œæ— æ³•æ’¤é”€ï¼"
+result = MsgBox(msg, vbYesNo + vbExclamation, "ç¡®è®¤åˆ é™¤")
 
 If result = vbYes Then
-    ' É¾³ıËùÓĞHTMLÎÄ¼ş
+    ' åˆ é™¤æ‰€æœ‰HTMLæ–‡ä»¶
     On Error Resume Next
     deleteCount = 0
     For Each file In folder.Files
@@ -46,10 +46,10 @@ If result = vbYes Then
     Next
     On Error GoTo 0
     
-    ' ÏÔÊ¾½á¹û
+    ' æ˜¾ç¤ºç»“æœ
     If deleteCount = fileCount Then
-        MsgBox "³É¹¦É¾³ı " & deleteCount & " ¸öÎÄ¼ş", vbInformation, "Íê³É"
+        MsgBox "æˆåŠŸåˆ é™¤ " & deleteCount & " ä¸ªæ–‡ä»¶", vbInformation, "å®Œæˆ"
     Else
-        MsgBox "ÒÑÉ¾³ı " & deleteCount & " ¸öÎÄ¼ş£¬Ê§°Ü " & (fileCount - deleteCount) & " ¸ö", vbExclamation, "²¿·Ö³É¹¦"
+        MsgBox "å·²åˆ é™¤ " & deleteCount & " ä¸ªæ–‡ä»¶ï¼Œå¤±è´¥ " & (fileCount - deleteCount) & " ä¸ª", vbExclamation, "éƒ¨åˆ†æˆåŠŸ"
     End If
 End If

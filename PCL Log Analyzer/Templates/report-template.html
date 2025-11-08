@@ -307,6 +307,17 @@ function renderError(e) {
                 const firstLine = cleanErrorLine(e.Content);
                 html += `<div class='error-code'>${firstLine}（详见关键日志）</div>`;
             }
+        } else if (e.Type === 'Mixin冲突') {
+            if (e.Details && e.Details.length > 0) {
+                const validDetails = e.Details.filter(d => d && d.trim());
+                html += `<div class='error-type'>${errorTitle} (${validDetails.length}个Mod)</div>`;
+                validDetails.forEach(detail => {
+                    html += `<div class='error-code'>• ${detail}</div>`;
+                });
+            } else {
+                html += `<div class='error-type'>${errorTitle}</div>`;
+                html += "<div class='error-code'>详见关键日志</div>";
+            }
         } else {
             // 其他收集详情类型：显示计数
             const countText = (e.Count && e.Count > 1) ? ` (共${e.Count}${getCountUnit(e.Type)})` : '';
